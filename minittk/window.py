@@ -24,12 +24,14 @@ class MyWindow:
         :param title: 窗口标题
         :param geometry: 窗口大小 XxY
         :param resizable: x,y轴可否调整大小(bool, bool)
-        :param position: 窗口弹出位置 x, y
+        :param position: 窗口弹出位置 (x, y)
         """
+        resizable_ = (True, True) if not isinstance(resizable, Iterable) else resizable
+        position_ = '' if not isinstance(resizable, Iterable) else f'+{position[0]}+{position[1]}'
         self.window_ = self.__class__.windowType()
         self.window.title(title)
-        self.window.geometry(geometry)
-        self.window.resizable(True, True)
+        self.window.geometry(geometry+position_)
+        self.window.resizable(*resizable_)
 
     def mainloop(self) -> None: self.window.mainloop()
 
