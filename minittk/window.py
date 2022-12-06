@@ -7,7 +7,7 @@ class MyWindow:
     windowType = None
 
     def __new__(cls, *args, **kwargs) -> "MyWindow":
-        """用于判断窗口类别(父/子)"""
+        """判断窗口类别(父/子)"""
         if not cls.father_exists:  # 是主窗口(第一次执行new)
             cls.father_exists = True
             cls.windowType = WINDOW
@@ -19,17 +19,10 @@ class MyWindow:
 
         return super(MyWindow, cls).__new__(cls)
 
-    def __init__(self, title=None, geometry=None, resizable=None, position=None) -> None:
-        """
-        :param title: 窗口标题
-        :param geometry: 窗口大小 XxY
-        :param resizable: x,y轴可否调整大小(bool, bool)
-        :param position: 窗口弹出位置 (x, y)
-        """
+    def __init__(self, title=None, geometry=None, resizable=None, position=None, theme='litera') -> None:
         resizable_ = (True, True) if not isinstance(resizable, Iterable) else resizable
         position_ = '' if not isinstance(resizable, Iterable) else f'+{position[0]}+{position[1]}'
-
-        self.window_ = self.__class__.windowType()
+        self.window_ = self.__class__.windowType(themename=theme)
         self.window.title(title)
         self.window.geometry(geometry+position_)
         self.window.resizable(*resizable_)
@@ -51,6 +44,11 @@ class MyWindow:
         :param kwargs: 组件参数
         :return: 返回组件对象
         """
-        parent_ = self.window if parent is None else parent.window
+        if isinstance(parent, MyWindow):
+            parent_ = parent.window
+        else:
+            parent_ = parent
+
+        parent_ = self.window if parent_ is None else parent_
         widget = WType[wtype](parent_, **kwargs)
         return widget

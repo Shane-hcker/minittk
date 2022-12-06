@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
+from functools import partial
 import ttkbootstrap as ttk
-from tkinter.ttk import Widget
 from typing import *
 
 from .constants import *
 from .window import *
+from .widgetqueue import WidgetQueue

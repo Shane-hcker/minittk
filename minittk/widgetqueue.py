@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from minittk import *
+from tkinter.ttk import Widget
 
 
 class WidgetQueue(list):
@@ -14,10 +14,10 @@ class WidgetQueue(list):
         self[index].pack(**kwargs)
 
     def pack_all(self, **kwargs):
-        for i in self:
+        for i in range(len(self)):
             if not isinstance(self[i], Widget):
                 raise AttributeError('Element has to be type \'ttk.Widget\'')
-            i.pack(**kwargs)
+            self[i].pack(**kwargs)
 
     @property
     def empty(self): return len(self) == 0
