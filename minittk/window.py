@@ -3,17 +3,17 @@ from minittk import *
 
 
 class MyWindow:
-    father_exists = False  # 父亲是否存在
+    father_exists = False  # if father exists
     windowType = None
 
     def __new__(cls, *args, **kwargs) -> "MyWindow":
-        """判断窗口类别(父/子)"""
-        if not cls.father_exists:  # 是主窗口(第一次执行new)
+        """Determine type of window(father/toplevel)"""
+        if not cls.father_exists:  # is father(1st time exec __new__())
             cls.father_exists = True
             cls.windowType = WINDOW
             return super(MyWindow, cls).__new__(cls)
 
-        # 子窗口时，检查变量是否为Toplevel
+        # If it is toplv, check whether var windowtype is TOPLEVEL
         if cls.windowType is not TOPLEVEL:
             cls.windowType = TOPLEVEL
 
@@ -37,12 +37,19 @@ class MyWindow:
     @staticmethod
     def sql_run(): pass
 
+    def add_trview(self, columns, heads, height=None, parent=None):
+        trview = self.add(treeview, parent, column=columns[1:], height=height)
+        for i in range(len(columns)):
+            trview.column(columns[i], anchor=CENTER)
+            trview.heading(columns[i], text=heads[i])
+        return trview
+
     def add(self, wtype, parent=None, **kwargs):
         """
-        :param wtype 组件 String
-        :param parent 依附对象
-        :param kwargs: 组件参数
-        :return: 返回组件对象
+        :param wtype: Widget String
+        :param parent: Attached Object(Father)
+        :param kwargs: Widget Kw arguments
+        :return: return: Widget Obj
         """
         if isinstance(parent, MyWindow):
             parent_ = parent.window
