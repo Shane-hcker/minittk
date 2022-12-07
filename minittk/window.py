@@ -38,7 +38,7 @@ class MyWindow:
     def sql_run(): pass
 
     def add_trview(self, columns, heads, height=None, parent=None):
-        trview = self.add(treeview, parent, column=columns[1:], height=height)
+        trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
         for i in range(len(columns)):
             trview.column(columns[i], anchor=CENTER)
             trview.heading(columns[i], text=heads[i])
