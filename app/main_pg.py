@@ -12,10 +12,16 @@ class MainPage(MyWindow):
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='info')
         self.panedwin.pack(fill=BOTH, expand=True)
         # Frame
-        self.rightFrame = self.add(frame)
+        self.rightFrame = self.add(frame)  # Father of Right Part of Panedwindow
+        # Frame for button placement
+        self.rightTopFrame = self.add(frame, parent=self.rightFrame, height=5)
+        self.rightTopFrame.pack(fill=X)
+
         # Treeview
         self.tree = self.add_trview(parent=self.rightFrame, columns=('#0', 'col1', 'col2', 'col3'),
                                     heads=('Name', 'Value1', 'Value2', 'Last Modified'), height=10)
+        self.tree.pack(fill=BOTH, expand=True)
+
         # Combobox
         self.selectionCombobox: combobox = None
         self.sidebar()
@@ -57,10 +63,8 @@ class MainPage(MyWindow):
 
     def viewTab(self):
         """similar to the editor tab of PyCharm"""
-        # Add buttons to the right frame
-        self.tree.pack(fill=BOTH, expand=True)
-        self.add(button, self.rightFrame, text='腾讯会议打开').pack(padx=10, pady=10, side=LEFT, fill=BOTH)
-        self.add(button, self.rightFrame, text='Zoom会议打开').pack(padx=10, pady=10, side=LEFT, fill=BOTH)
+        self.add(button, self.rightTopFrame, text='腾讯会议打开').pack(padx=10, pady=10, side=LEFT)
+        self.add(button, self.rightTopFrame, text='Zoom会议打开').pack(pady=10, side=LEFT)
 
         self.panedwin.add(self.rightFrame)  # add table to Panedwindow
 
