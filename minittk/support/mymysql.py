@@ -2,7 +2,7 @@
 from minittk import *
 
 
-class MyMySQL(pymysql.Connection):
+class MySQLMixIn(pymysql.Connection):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -13,3 +13,8 @@ class MyMySQL(pymysql.Connection):
         self.close()
         if exc_type is not None:
             raise exc_type()
+
+    @property
+    def cursor(self):
+        """Get Cursor"""
+        return 1
