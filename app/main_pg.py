@@ -24,10 +24,11 @@ class MainPage(MyWindow):
 
         # Combobox
         self.selectionCombobox: combobox = None
-        self.sidebar()
-        self.viewTab()
+        self.themeCombobox: combobox = None
+        self.__sidebar()
+        self.__viewTab()
 
-    def selectionComboboxSelected(self, event):
+    def __selectionComboboxSelected(self, event):
         """Combobox trigger"""
         getval = self.selectionCombobox.get()
         # clear Treeview
@@ -37,7 +38,14 @@ class MainPage(MyWindow):
         for i in range(int(getval)):
             self.tree.insert('', END, text='21312', values=[1, 2, 3])
 
-    def sidebar(self):
+    def add_trview(self, columns, heads, height=None, parent=None):
+        trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
+        for i in range(len(columns)):
+            trview.column(columns[i], anchor=CENTER)
+            trview.heading(columns[i], text=heads[i])
+        return trview
+
+    def __sidebar(self):
         """左侧边栏"""
         # PanedWindow
         lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10)
@@ -57,14 +65,21 @@ class MainPage(MyWindow):
         self.selectionCombobox = self.add(combobox, lFrame, value=[1, 2, 3, 4], width=25)
         self.selectionCombobox.grid(column=0, row=5, columnspan=5, pady=5, ipady=5)
         # Bind event
-        self.selectionCombobox.bind('<<ComboboxSelected>>', self.selectionComboboxSelected)
+        self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
 
         self.panedwin.add(lFrame)
 
-    def viewTab(self):
+    def __viewTab(self):
         """similar to the editor tab of PyCharm"""
+        # Buttons
         self.add(button, self.rightTopFrame, text='腾讯会议打开').pack(padx=10, pady=10, side=LEFT)
         self.add(button, self.rightTopFrame, text='Zoom会议打开').pack(pady=10, side=LEFT)
+        self.add(button, self.rightTopFrame, text='账户').pack(padx=10, pady=10, side=RIGHT)
+        # Theme Combobox
+        self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
+                 padx=10, pady=10, side=LEFT)
+        self.themeCombobox = self.add(combobox, self.rightFrame, width=10, value=[1, 2, 3, 4])
+        self.themeCombobox.pack(pady=10, side=LEFT)
 
         self.panedwin.add(self.rightFrame)  # add table to Panedwindow
 

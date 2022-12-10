@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 from ttkbootstrap.constants import *
-import ttkbootstrap as ttk
 from collections import defaultdict
+import ttkbootstrap as ttk
+
 from minittk import *
 
 # Vars
@@ -28,7 +29,7 @@ panedwindow = 'panedwindow'
 labelframe = 'labelframe'
 
 # TTK Widget Type
-WType = {
+WType = defaultdict(lambda: ttk.Label, {
     'button': ttk.Button,
     'combobox': ttk.Combobox,
     'entry': ttk.Entry,
@@ -41,4 +42,4 @@ WType = {
     'radiobutton': ttk.Radiobutton,
     'panedwindow': ttk.PanedWindow,
     'labelframe': ttk.Labelframe,
-}
+})

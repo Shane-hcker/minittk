@@ -3,18 +3,19 @@ from minittk import *
 
 
 class MySQLMixIn(pymysql.Connection):
-    def __init__(self, **kwargs):
+    _instance = None
+    __init_flag = False
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__()
+        return cls._instance
+
+    def __init__(self, cfgdir=None, loadcfg=False, **kwargs):
+        if self.__class__.__init_flag:
+            return
+        self.__class__.__init_flag = True
+        # if any condition satisfied, load the .ini file
+        if loadcfg or cfgdir or not kwargs:
+            pass
         super().__init__(**kwargs)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-        if exc_type is not None:
-            raise exc_type()
-
-    @property
-    def cursor(self):
-        """Get Cursor"""
-        return 1

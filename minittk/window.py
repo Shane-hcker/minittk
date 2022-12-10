@@ -19,12 +19,13 @@ class MyWindow:
 
         return super(MyWindow, cls).__new__(cls)
 
-    def __init__(self, title=None, geometry=None, resizable=None, position=None, theme='litera') -> None:
+    def __init__(self, title=None, geometry=None, resizable=None, position=None, theme='solar') -> None:
         resizable_ = (True, True) if not isinstance(resizable, Iterable) else resizable
         position_ = '' if not isinstance(resizable, Iterable) else f'+{position[0]}+{position[1]}'
+        geometry_ = '200x300' if not isinstance(geometry, str) else geometry
         self.window_ = self.__class__.windowType(themename=theme)
         self.window.title(title)
-        self.window.geometry(geometry+position_)
+        self.window.geometry(geometry_+position_)
         self.window.resizable(*resizable_)
 
     def mainloop(self) -> None:
@@ -36,13 +37,6 @@ class MyWindow:
 
     @staticmethod
     def sql_run(): pass
-
-    def add_trview(self, columns, heads, height=None, parent=None):
-        trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
-        for i in range(len(columns)):
-            trview.column(columns[i], anchor=CENTER)
-            trview.heading(columns[i], text=heads[i])
-        return trview
 
     def add(self, wtype, parent=None, **kwargs):
         """
