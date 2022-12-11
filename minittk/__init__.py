@@ -5,7 +5,7 @@ import ttkbootstrap as ttk
 from typing import *
 import pymysql
 
-from minittk.support.mymysql import MySQLMixIn
-from .widgetqueue import WidgetQueue
+from minittk.support.mymysql import *
+from .widgetqueue import *
 from .constants import *
 from .window import *

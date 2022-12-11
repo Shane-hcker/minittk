@@ -4,9 +4,7 @@ from minittk import *
 
 class MainPage(MyWindow):
     def __init__(self, title, geometry):
-        resize = (True, True)
-        position = (450, 200)
-        super().__init__(title, geometry, resize, position)
+        super().__init__(title, geometry, (True, True), (450, 200))
 
         # Panedwindow
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='info')
@@ -16,12 +14,10 @@ class MainPage(MyWindow):
         # Frame for button placement
         self.rightTopFrame = self.add(frame, parent=self.rightFrame, height=5)
         self.rightTopFrame.pack(fill=X)
-
         # Treeview
-        self.tree = self.add_trview(parent=self.rightFrame, columns=('#0', 'col1', 'col2', 'col3'),
-                                    heads=('Name', 'Value1', 'Value2', 'Last Modified'), height=10)
+        self.tree = self.__add_trview(parent=self.rightFrame, columns=('#0', 'col1', 'col2', 'col3'),
+                                      heads=('Name', 'Value1', 'Value2', 'Last Modified'), height=10)
         self.tree.pack(fill=BOTH, expand=True)
-
         # Combobox
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
@@ -29,7 +25,6 @@ class MainPage(MyWindow):
         self.__viewTab()
 
     def __selectionComboboxSelected(self, event):
-        """Combobox trigger"""
         getval = self.selectionCombobox.get()
         # clear Treeview
         for i in self.tree.get_children():
@@ -38,7 +33,7 @@ class MainPage(MyWindow):
         for i in range(int(getval)):
             self.tree.insert('', END, text='21312', values=[1, 2, 3])
 
-    def add_trview(self, columns, heads, height=None, parent=None):
+    def __add_trview(self, columns, heads, height=None, parent=None):
         trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
         for i in range(len(columns)):
             trview.column(columns[i], anchor=CENTER)
@@ -70,11 +65,13 @@ class MainPage(MyWindow):
         self.panedwin.add(lFrame)
 
     def __viewTab(self):
-        """similar to the editor tab of PyCharm"""
         # Buttons
         self.add(button, self.rightTopFrame, text='腾讯会议打开').pack(padx=10, pady=10, side=LEFT)
         self.add(button, self.rightTopFrame, text='Zoom会议打开').pack(pady=10, side=LEFT)
-        self.add(button, self.rightTopFrame, text='账户').pack(padx=10, pady=10, side=RIGHT)
+        account_btn = self.add(button, self.rightTopFrame, text='账户')
+        account_btn.pack(padx=10, pady=10, side=RIGHT)
+        # Bind tip window to account button
+        ToolTip(account_btn, text='Admin 已登录', bootstyle='info-reverse', wraplength=175)
         # Theme Combobox
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)

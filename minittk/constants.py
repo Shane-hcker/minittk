@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
+from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.constants import *
 from collections import defaultdict
 import ttkbootstrap as ttk
 
-from minittk import *
 
 # Vars
 strvar = ttk.StringVar
@@ -27,6 +27,7 @@ checkbutton = 'checkbutton'
 radiobutton = 'radiobutton'
 panedwindow = 'panedwindow'
 labelframe = 'labelframe'
+tooltip = 'tooltip'
 
 # TTK Widget Type
 WType = defaultdict(lambda: ttk.Label, {
@@ -42,4 +43,5 @@ WType = defaultdict(lambda: ttk.Label, {
     'radiobutton': ttk.Radiobutton,
     'panedwindow': ttk.PanedWindow,
     'labelframe': ttk.Labelframe,
+    'tooltip': ToolTip,
 })

@@ -19,7 +19,7 @@ class MyWindow:
 
         return super(MyWindow, cls).__new__(cls)
 
-    def __init__(self, title=None, geometry=None, resizable=None, position=None, theme='solar') -> None:
+    def __init__(self, title=None, geometry=None, resizable=None, position=None, theme='litera') -> None:
         resizable_ = (True, True) if not isinstance(resizable, Iterable) else resizable
         position_ = '' if not isinstance(resizable, Iterable) else f'+{position[0]}+{position[1]}'
         geometry_ = '200x300' if not isinstance(geometry, str) else geometry
