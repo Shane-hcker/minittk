@@ -52,7 +52,7 @@ class MainPage(MyWindow):
         funcs = ['创建', '复制', '迁移', '导出', '导入', '命令']
         for i in range(1, 4):
             for j in range(1, 3):
-                self.add(button, lFrame, text=funcs[t], command=lambda: print(funcs[t-1])).grid(
+                self.add(button, lFrame, text=funcs[t]).grid(
                     column=i, row=j, ipadx=5, ipady=2, padx=2, pady=2)
                 t += 1
         # Combobox Placement
@@ -68,10 +68,8 @@ class MainPage(MyWindow):
         # Buttons
         self.add(button, self.rightTopFrame, text='腾讯会议打开').pack(padx=10, pady=10, side=LEFT)
         self.add(button, self.rightTopFrame, text='Zoom会议打开').pack(pady=10, side=LEFT)
-        account_btn = self.add(button, self.rightTopFrame, text='账户')
-        account_btn.pack(padx=10, pady=10, side=RIGHT)
-        # Bind tip window to account button
-        ToolTip(account_btn, text='Admin 已登录', bootstyle='info-reverse', wraplength=175)
+        setting_btn = self.add(button, self.rightTopFrame, text='账户')
+        setting_btn.pack(padx=10, pady=10, side=RIGHT)
         # Theme Combobox
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)
