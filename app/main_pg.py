@@ -1,26 +1,78 @@
 # -*- encoding: utf-8 -*-
+import time
+
 from minittk import *
-# from multiprocessing import Process
 
 
 class MainPage(MyWindow):
     def __init__(self, title, geometry):
         super().__init__(title, geometry, (True, True), (450, 200))
-        # Panedwindow
+        self.cfgfile = './user/config.ini'
+        self._connection = UserConnection(self.cfgfile)
+
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='info')
         self.panedwin.pack(fill=BOTH, expand=True)
-        # Frame
         self.rightFrame = self.add(frame)  # Father of Right Part of Panedwindow
         # Child of rightFrame
         self.rightTopFrame = self.add(frame, parent=self.rightFrame, height=5)
         self.rightTopFrame.pack(fill=X)
-        # Treeview
         self.tree = self.add_trview(parent=self.rightFrame, columns=('#0', 'col1', 'col2', 'col3'),
                                     heads=('Name', 'Value1', 'Value2', 'Last Modified'), height=10)
         self.tree.pack(fill=BOTH, expand=True)
-        # Combobox
+
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
+
+    @property
+    def cursor(self): return self._connection.csr
+    def run_query(self, *args, **kwargs): return self._connection.run_query(*args, **kwargs)
+    def show_tables(self): return self.run_query('show tables')
+    def use(self, db): return self._connection.use(db)
+    def __enter__(self): return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.mainloop()
+        self._connection.close()
+        if exc_type is not None:
+            raise exc_type()
+
+    @staticmethod
+    def __waitForLocate(target):
+        while pyautogui.locateCenterOnScreen(target) is None:
+            sleep(1)
+        return
+
+    def selectionCode(self):
+        get_selection = self.tree.focus()  # selection()
+        return self.tree.set(get_selection)['col1']  # set() for getting the values of the row
+
+    def openwithTX(self):
+        waitfor = self.__waitForLocate
+        locate = pyautogui.locateCenterOnScreen
+        leftClick = pyautogui.leftClick
+        startfile(r"C:\Program Files (x86)\Tencent\WeMeet\wemeetapp.exe")
+        waitfor('./meetingapps/tx/join.png')
+        leftClick(locate('./meetingapps/tx/join.png'))
+        sleep(3.5)
+        if locate('./meetingapps/tx/disabled_ch.png') is not None:
+            print('go1')
+            pyautogui.typewrite(self.selectionCode())
+            sleep(1)
+            leftClick(locate('./meetingapps/tx/join_ch.png'))
+            print('okch')
+            return
+        elif locate('./meetingapps/tx/disabled_en.png') is not None:
+            print('go2')
+            pyautogui.typewrite(self.selectionCode())
+            sleep(1)
+            leftClick(locate('./meetingapps/tx/join_en.png'))
+            print('oken')
+            return
+        raise InterruptedError('bruh.')
+
+    def openwithZoom(self):
+        locate = pyautogui.locateCenterOnScreen
+        return self
 
     def __themeComboboxSelected(self, event):
         get_theme = self.themeCombobox.get()
@@ -33,8 +85,11 @@ class MainPage(MyWindow):
         for i in self.tree.get_children():
             self.tree.delete(i)
         # restore Treeview
-        for i in range(int(getval)):
-            self.tree.insert('', END, text='21312', values=[1, 2, 3])
+        for i in self.run_query(f'select * from {getval}'):
+            try:
+                self.tree.insert('', END, text=i[0], values=[i[1], i[2], i[3]])
+            except Exception as e:
+                pass
 
     def sidebar(self):
         # PanedWindow
@@ -50,14 +105,19 @@ class MainPage(MyWindow):
                 t += 1
         # Combobox Placement
         self.add(label, lFrame, text='选择表格: ').grid(column=0, row=4, columnspan=2)
-        self.selectionCombobox = self.add(combobox, lFrame, value=[1, 2, 3, 4], width=25)
+        self.selectionCombobox = self.add(combobox, lFrame, width=25)
+        self.selectionCombobox['value'] = [i[0] for i in self.show_tables()]
         self.selectionCombobox.grid(column=0, row=5, columnspan=5, pady=5, ipady=5)
         self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
         self.panedwin.add(lFrame)
 
     def viewTab(self):
-        self.add(button, self.rightTopFrame, text='用腾讯会议打开').pack(padx=10, pady=10, side=LEFT)
-        self.add(button, self.rightTopFrame, text='用Zoom会议打开').pack(pady=10, side=LEFT)
+        self.add(button, self.rightTopFrame, text='用腾讯会议打开', command=
+                 self.openwithTX).pack(padx=10, pady=10, side=LEFT)
+
+        self.add(button, self.rightTopFrame, text='用Zoom会议打开', command=
+                 self.openwithZoom).pack(pady=10, side=LEFT)
+
         self.add(button, self.rightTopFrame, text='设置').pack(padx=10, pady=10, side=RIGHT)
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)
@@ -71,7 +131,6 @@ class MainPage(MyWindow):
 
 
 if __name__ == '__main__':
-    # TODO 为MySQL提供解决方案: multiprocessing
     with MainPage('Title', '1200x700') as window:
         window.sidebar()
         window.viewTab()
