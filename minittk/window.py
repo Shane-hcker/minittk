@@ -35,12 +35,15 @@ class MyWindow:
         widget = WType[wtype](parent_, **kwargs)
         return widget
 
-    def add_trview(self, columns, heads, height=None, parent=None):
+    def add_trview(self, columns, heads, height=None, parent=None) -> ttk.Treeview:
         trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
         for i in range(len(columns)):
             trview.column(columns[i], anchor=CENTER)
             trview.heading(columns[i], text=heads[i])
         return trview
+
+    def add_tabview(self, parent=None, **kwargs) -> Tableview:
+        return self.add(tableview, parent, **kwargs)
 
     @property
     def windowtype(self): return self.__class__.windowType

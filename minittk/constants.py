@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from ttkbootstrap.tooltip import ToolTip
+from ttkbootstrap.tableview import Tableview
 from ttkbootstrap.constants import *
 from collections import defaultdict
 import ttkbootstrap as ttk
@@ -28,6 +28,7 @@ radiobutton = 'radiobutton'
 panedwindow = 'panedwindow'
 labelframe = 'labelframe'
 tooltip = 'tooltip'
+tableview = 'tableview'
 
 # TTK Widget Type
 WType = defaultdict(lambda: ttk.Label, {
@@ -43,5 +44,5 @@ WType = defaultdict(lambda: ttk.Label, {
     'radiobutton': ttk.Radiobutton,
     'panedwindow': ttk.PanedWindow,
     'labelframe': ttk.Labelframe,
-    'tooltip': ToolTip,
+    'tableview': Tableview
 })

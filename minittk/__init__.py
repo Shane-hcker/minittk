@@ -1,4 +1,6 @@
 # -*- encoding: utf-8 -*-
+from ttkbootstrap.dialogs.dialogs import Messagebox
+from ttkbootstrap.tooltip import ToolTip
 from functools import partial
 import ttkbootstrap as ttk
 from os import startfile

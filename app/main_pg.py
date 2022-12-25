@@ -1,25 +1,33 @@
 # -*- encoding: utf-8 -*-
-import time
-
 from minittk import *
 
 
 class MainPage(MyWindow):
     def __init__(self, title, geometry):
-        super().__init__(title, geometry, (True, True), (450, 200))
         self.cfgfile = './user/config.ini'
         self._connection = UserConnection(self.cfgfile)
+        self.cfgParser = MyConfigParser()
+        self.curr_theme = self.cfgParser.get('App', 'theme')
+        posX, posY = self.cfgParser.getint('App', 'startupX'), self.cfgParser.getint('App', 'startupY')
 
-        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='info')
+        super().__init__(title, geometry, (True, True), (posX, posY), self.curr_theme)
+
+        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default')
         self.panedwin.pack(fill=BOTH, expand=True)
         self.rightFrame = self.add(frame)  # Father of Right Part of Panedwindow
         # Child of rightFrame
         self.rightTopFrame = self.add(frame, parent=self.rightFrame, height=5)
         self.rightTopFrame.pack(fill=X)
-        self.tree = self.add_trview(parent=self.rightFrame, columns=('#0', 'col1', 'col2', 'col3'),
-                                    heads=('Name', 'Value1', 'Value2', 'Last Modified'), height=10)
+        tree_column = [
+            dict(text='Name', stretch=True),
+            dict(text='Value1', stretch=True),
+            dict(text='Value2', stretch=True),
+            dict(text='Last Modified', stretch=True),
+        ]
+        self.tree = self.add_tabview(parent=self.rightFrame, coldata=tree_column, paginated=True,
+                                     searchable=True, stripecolor=(self.style.colors.light, None),
+                                     pagesize=20)
         self.tree.pack(fill=BOTH, expand=True)
-
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
 
@@ -38,58 +46,82 @@ class MainPage(MyWindow):
 
     @staticmethod
     def __waitForLocate(target):
+        t = 0
         while pyautogui.locateCenterOnScreen(target) is None:
+            t += 1
+            if t >= 15:
+                raise LookupError('Location not found')
             sleep(1)
+            print(f'going {t}')
+        return pyautogui.locateCenterOnScreen(target)
+
+    @property
+    def selectionCode(self):
+        get_selection = self.tree.view.focus()  # selection()
+        value = self.tree.view.set(get_selection)
+        return None if not value else (value['1'], value['2'])  # set() for getting the values of the row
+
+    def openLangTX(self, lang=None):
+        print(f'goto {lang} v')
+        code, pwd = self.selectionCode
+        pyautogui.typewrite(code)
+        sleep(1)
+        pyautogui.leftClick(self.__waitForLocate(f'./meetingapps/tx/join_{lang}.png'))
+        if pwd != 'None':
+            print(f'{lang} ui runned')
+            return
+        self.__waitForLocate('./meetingapps/tx/hide_pwd.png')
+        pyautogui.typewrite(pwd)
+        pyautogui.press('enter')
+        print(f'{lang} ui runned')
         return
 
-    def selectionCode(self):
-        get_selection = self.tree.focus()  # selection()
-        return self.tree.set(get_selection)['col1']  # set() for getting the values of the row
-
     def openwithTX(self):
-        waitfor = self.__waitForLocate
-        locate = pyautogui.locateCenterOnScreen
-        leftClick = pyautogui.leftClick
+        if not self.selectionCode:
+            Messagebox.show_error(message='你未选择任何数据', title='错误')
+            return
         startfile(r"C:\Program Files (x86)\Tencent\WeMeet\wemeetapp.exe")
-        waitfor('./meetingapps/tx/join.png')
-        leftClick(locate('./meetingapps/tx/join.png'))
-        sleep(3.5)
-        if locate('./meetingapps/tx/disabled_ch.png') is not None:
-            print('go1')
-            pyautogui.typewrite(self.selectionCode())
-            sleep(1)
-            leftClick(locate('./meetingapps/tx/join_ch.png'))
-            print('okch')
-            return
-        elif locate('./meetingapps/tx/disabled_en.png') is not None:
-            print('go2')
-            pyautogui.typewrite(self.selectionCode())
-            sleep(1)
-            leftClick(locate('./meetingapps/tx/join_en.png'))
-            print('oken')
-            return
-        raise InterruptedError('bruh.')
+        try:
+            join = self.__waitForLocate('./meetingapps/tx/join.png')
+            pyautogui.leftClick(join)
+            down = self.__waitForLocate('./meetingapps/tx/down.png')
+            pyautogui.leftClick(down)
+            sleep(.5)
+            pyautogui.leftClick(down)
+            pyautogui.hotkey('ctrl', 'a')  # ensure that no code history remained
+            pyautogui.press('backspace')
+            print('ok')
+            if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_ch.png') is not None:
+                self.openLangTX('ch')
+            elif pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
+                self.openLangTX('en')
+        except LookupError:
+            raise LookupError('failure you mother fucker.')
 
     def openwithZoom(self):
-        locate = pyautogui.locateCenterOnScreen
-        return self
+        startfile(r'C:\Users\shane\AppData\Roaming\Zoom\bin\Zoom.exe')
+        pyautogui.leftClick(self.__waitForLocate('./meetingapps/zoom/join_meeting_zh.png'))
+        pyautogui.typewrite(self.selectionCode)
+        pyautogui.leftClick(self.__waitForLocate('./meetingapps/zoom/join_zh.png'))
+
+    def saveThemeChange(self):
+        self.cfgParser.set('App', 'theme', self.curr_theme)
+        self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
 
     def __themeComboboxSelected(self, event):
-        get_theme = self.themeCombobox.get()
-        self.theme_use(get_theme)
+        self.curr_theme = self.themeCombobox.get()
+        self.theme_use(self.curr_theme)
         self.themeCombobox.selection_clear()
 
     def __selectionComboboxSelected(self, event):
         getval = self.selectionCombobox.get()
-        # clear Treeview
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-        # restore Treeview
-        for i in self.run_query(f'select * from {getval}'):
+        self.tree.delete_rows()
+        for data in self.run_query(f'select * from {getval}'):
             try:
-                self.tree.insert('', END, text=i[0], values=[i[1], i[2], i[3]])
-            except Exception as e:
-                pass
+                self.tree.insert_row(END, values=[data[0], data[1], data[2], data[3]])
+                self.tree.load_table_data()
+            except IndexError:
+                raise IndexError(f'Each row of {getval} has to be in a length of 4')
 
     def sidebar(self):
         # PanedWindow
@@ -101,30 +133,30 @@ class MainPage(MyWindow):
         for i in range(1, 4):
             for j in range(1, 3):
                 self.add(button, lFrame, text=funcName[t]).grid(
-                    column=i, row=j, ipadx=5, ipady=2, padx=2, pady=2)
+                    column=i, row=j, ipadx=2, ipady=2, padx=2, pady=2)
                 t += 1
         # Combobox Placement
         self.add(label, lFrame, text='选择表格: ').grid(column=0, row=4, columnspan=2)
         self.selectionCombobox = self.add(combobox, lFrame, width=25)
-        self.selectionCombobox['value'] = [i[0] for i in self.show_tables()]
+        self.selectionCombobox['value'] = [i[0] for i in self.show_tables()
+                                           if len(self.run_query(f'desc {i[0]}')) == 4]
         self.selectionCombobox.grid(column=0, row=5, columnspan=5, pady=5, ipady=5)
         self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
         self.panedwin.add(lFrame)
 
     def viewTab(self):
-        self.add(button, self.rightTopFrame, text='用腾讯会议打开', command=
-                 self.openwithTX).pack(padx=10, pady=10, side=LEFT)
-
-        self.add(button, self.rightTopFrame, text='用Zoom会议打开', command=
-                 self.openwithZoom).pack(pady=10, side=LEFT)
-
+        self.add(button, self.rightTopFrame, text='用腾讯会议打开',
+                 command=self.openwithTX).pack(padx=10, pady=10, side=LEFT)
+        self.add(button, self.rightTopFrame, text='用Zoom会议打开',
+                 command=self.openwithZoom).pack(pady=10, side=LEFT)
         self.add(button, self.rightTopFrame, text='设置').pack(padx=10, pady=10, side=RIGHT)
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)
+
         self.themeCombobox = self.add(combobox, self.rightFrame, width=10, value=self.style.theme_names())
         self.themeCombobox.pack(pady=10, side=LEFT)
         self.themeCombobox.bind('<<ComboboxSelected>>', self.__themeComboboxSelected)
-        theme_save = self.add(button, self.rightFrame, text='保存主题')
+        theme_save = self.add(button, self.rightFrame, text='保存主题', command=self.saveThemeChange)
         theme_save.pack(padx=10, pady=10, side=LEFT)
         ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-reverse')
         self.panedwin.add(self.rightFrame)  # add frame to Panedwindow
