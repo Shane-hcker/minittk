@@ -31,11 +31,6 @@ class MainPage(MyWindow):
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
 
-    @property
-    def cursor(self): return self._connection.csr
-    def run_query(self, *args, **kwargs): return self._connection.run_query(*args, **kwargs)
-    def show_tables(self): return self.run_query('show tables')
-    def use(self, db): return self._connection.use(db)
     def __enter__(self): return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -43,6 +38,12 @@ class MainPage(MyWindow):
         self._connection.close()
         if exc_type is not None:
             raise exc_type()
+
+    @property
+    def selectionCode(self):
+        get_selection = self.tree.view.focus()  # selection()
+        value = self.tree.view.set(get_selection)
+        return None if not value else (value['1'], value['2'])  # set() for getting the values of the row
 
     @staticmethod
     def __waitForLocate(target):
@@ -54,12 +55,6 @@ class MainPage(MyWindow):
             sleep(1)
             print(f'going {t}')
         return pyautogui.locateCenterOnScreen(target)
-
-    @property
-    def selectionCode(self):
-        get_selection = self.tree.view.focus()  # selection()
-        value = self.tree.view.set(get_selection)
-        return None if not value else (value['1'], value['2'])  # set() for getting the values of the row
 
     def openLangTX(self, lang=None):
         print(f'goto {lang} v')
@@ -145,9 +140,9 @@ class MainPage(MyWindow):
         self.panedwin.add(lFrame)
 
     def viewTab(self):
-        self.add(button, self.rightTopFrame, text='用腾讯会议打开',
+        self.add(button, self.rightTopFrame, text='用腾讯会议打开', bootstyle='SUCCESS',
                  command=self.openwithTX).pack(padx=10, pady=10, side=LEFT)
-        self.add(button, self.rightTopFrame, text='用Zoom会议打开',
+        self.add(button, self.rightTopFrame, text='用Zoom会议打开', bootstyle='INFO',
                  command=self.openwithZoom).pack(pady=10, side=LEFT)
         self.add(button, self.rightTopFrame, text='设置').pack(padx=10, pady=10, side=RIGHT)
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
@@ -160,6 +155,12 @@ class MainPage(MyWindow):
         theme_save.pack(padx=10, pady=10, side=LEFT)
         ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-reverse')
         self.panedwin.add(self.rightFrame)  # add frame to Panedwindow
+
+    @property
+    def cursor(self): return self._connection.csr
+    def run_query(self, *args, **kwargs): return self._connection.run_query(*args, **kwargs)
+    def show_tables(self): return self.run_query('show tables')
+    def use(self, db): return self._connection.use(db)
 
 
 if __name__ == '__main__':
