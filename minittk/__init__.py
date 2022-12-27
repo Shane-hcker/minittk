@@ -10,6 +10,7 @@ import configparser
 import pyautogui
 import pymysql
 
+from minittk.support.uiautomation import *
 from minittk.support.cfgparser import *
 from minittk.support.dbconn import *
 from .widgetqueue import *
