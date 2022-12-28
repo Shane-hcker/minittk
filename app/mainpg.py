@@ -67,7 +67,7 @@ class MainPage(MyWindow):
         self.tree.delete_rows()
         for data in self.run_query(f'select * from {getval}'):
             try:
-                self.tree.insert_row(END, values=[data[0], data[1], data[2], data[3]])
+                self.tree.insert_row(values=[data[0], data[1], data[2], data[3]])
                 self.tree.load_table_data()
             except IndexError:
                 raise IndexError(f'Each row of {getval} has to be in a length of 4')
@@ -101,7 +101,6 @@ class MainPage(MyWindow):
         self.add(button, self.rightTopFrame, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
         self.add(label, self.rightFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)
-
         self.themeCombobox = self.add(combobox, self.rightFrame, width=10, value=self.style.theme_names())
         self.themeCombobox.pack(pady=10, side=LEFT)
         self.themeCombobox.bind('<<ComboboxSelected>>', self.__themeComboboxSelected)
