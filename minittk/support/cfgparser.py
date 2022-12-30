@@ -1,5 +1,5 @@
-# -*- encoding: utf-8 -*-
-from minittk import *
+# -*- encodingss: utf-8 -*-
+import configparser
 
 
 class MyConfigParser(configparser.ConfigParser):

@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
-from minittk import *
+import pymysql
+
+from .cfgparser import MyConfigParser
 
 
 class UserConnection(pymysql.Connection):
