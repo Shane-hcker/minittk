@@ -5,6 +5,11 @@ from collections import defaultdict
 import ttkbootstrap as ttk
 
 
+# Focuses
+FOCUS = 'focus'
+FOCUSIN = 'focusin'
+FOCUSOUT = 'focusout'
+
 # Vars
 strvar = ttk.StringVar
 intvar = ttk.IntVar
