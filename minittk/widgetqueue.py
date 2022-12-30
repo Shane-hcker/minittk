@@ -1,25 +1,24 @@
 # -*- encoding: utf-8 -*-
-from tkinter.ttk import Widget
-
-
 class WidgetQueue(list):
     def __init__(self, *args):
         super().__init__()
         for _ in args:
             self.enqueue(_)
 
-    def pack_one(self, index, **kwargs):
-        if not isinstance(self[index], Widget):
-            raise AttributeError('Element has to be type \'ttk.Widget\'')
-        self[index].pack(**kwargs)
-
-    def pack_all(self, **kwargs):
-        for i in range(len(self)):
-            if not isinstance(self[i], Widget):
-                raise AttributeError('Element has to be type \'ttk.Widget\'')
-            self[i].pack(**kwargs)
+    def getList(self):
+        """returns a list of widget.get() method results"""
+        try:
+            return [i.get() for i in self]
+        except Exception:  # if a widget cannot be gotten
+            raise Exception()  # raise Error
 
     @property
-    def empty(self): return len(self) == 0
-    def enqueue(self, item): self.append(item)
-    def dequeue(self): self.pop(0)
+    def empty(self):
+        return not self
+
+    def enqueue(self, item):
+        self.append(item)
+        return item
+
+    def dequeue(self):
+        return self.pop(0)

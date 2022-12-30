@@ -4,13 +4,13 @@ from minittk import *
 
 
 class MainPage(MyWindow):
-    def __init__(self, title, geometry):
+    def __init__(self):
         self.cfgfile = './user/config.ini'
         self._connection = UserConnection(self.cfgfile)
         self.cfgParser = MyConfigParser()
         self.curr_theme = self.cfgParser.get('App', 'theme')
-        posX, posY = self.cfgParser.getint('App', 'startupX'), self.cfgParser.getint('App', 'startupY')
-        super().__init__(title, geometry, (True, True), (posX, posY), self.curr_theme)
+        posX, posY = self.cfgParser.getint('App', 'startup.x'), self.cfgParser.getint('App', 'startup.y')
+        super().__init__('Title', '1200x700', (True, True), (posX, posY), self.curr_theme)
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default')
         self.panedwin.pack(fill=BOTH, expand=True)
         self.rightFrame = self.add(frame)  # Father of Right Part of Panedwindow
@@ -74,7 +74,7 @@ class MainPage(MyWindow):
 
     def sidebar(self):
         # PanedWindow
-        lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10)
+        lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10, bootstyle='success')
         lFrame.pack(fill=BOTH, padx=50, pady=50, anchor='center')  # LabelFrame
         # Functioned Buttons Placements
         t = 0
@@ -111,6 +111,6 @@ class MainPage(MyWindow):
 
 
 if __name__ == '__main__':
-    with MainPage('Title', '1200x700') as window:
+    with MainPage() as window:
         window.sidebar()
         window.viewTab()
