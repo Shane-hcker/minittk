@@ -104,7 +104,7 @@ class MainPage(MyWindow):
         self.themeCombobox = self.add(combobox, self.rightFrame, width=10, value=self.style.theme_names())
         self.themeCombobox.pack(pady=10, side=LEFT)
         self.themeCombobox.bind('<<ComboboxSelected>>', self.__themeComboboxSelected)
-        theme_save = self.add(button, self.rightFrame, text='保存主题', command=self.saveThemeChange)
+        theme_save = self.add(button, self.rightFrame, text='保存主题', command=self.saveThemeChange, bootstyle=LIGHT)
         theme_save.pack(padx=10, pady=10, side=LEFT)
         ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-reverse')
         self.panedwin.add(self.rightFrame)  # add frame to Panedwindow

@@ -1,5 +1,11 @@
 # -*- encoding: utf-8 -*-
-from minittk import *
+from ttkbootstrap.dialogs.dialogs import Messagebox
+from os import startfile
+from time import sleep
+from typing import *
+import pyautogui
+
+from .cfgparser import MyConfigParser
 
 
 class UIAutomation:
@@ -42,13 +48,14 @@ class UIAutomation:
             print(f'{lang} ui runned')
             return
 
-        startfile(r"C:\Program Files (x86)\Tencent\WeMeet\wemeetapp.exe")
+        cfgParser = MyConfigParser()
+        startfile(cfgParser.get('Launch', 'tencentmeeting'))
         try:
             join = UIAutomation.__waitForLocate('./meetingapps/tx/join.png')
             pyautogui.leftClick(join)
             down = UIAutomation.__waitForLocate('./meetingapps/tx/down.png')
             pyautogui.leftClick(down)
-            sleep(.5)
+            sleep(1)
             pyautogui.leftClick(down)
             pyautogui.hotkey('ctrl', 'a')  # ensure that no code history remained
             pyautogui.press('backspace')
@@ -58,12 +65,13 @@ class UIAutomation:
             elif pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
                 openLangTX(lang='en')
         except LookupError:
-            raise LookupError('failure you mother fucker.')
+            raise LookupError('failed to launch')
 
     @staticmethod
     def openwithZoom(selectionCode: Tuple[str, int]):
+        cfgParser = MyConfigParser()
         code, pwd = selectionCode
-        startfile(r'C:\Users\shane\AppData\Roaming\Zoom\bin\Zoom.exe')
+        startfile(cfgParser.get('Launch', 'zoom'))
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_meeting_zh.png'))
         pyautogui.typewrite(code)
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_zh.png'))
