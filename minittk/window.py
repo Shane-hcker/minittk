@@ -55,10 +55,19 @@ class MyWindow(metaclass=ABCMeta):
         return self.add(tableview, parent, **kwargs)
 
     @property
-    def windowtype(self): return self.__class__.windowType
+    def windowtype(self):
+        return self.__class__.windowType
+
     @property
-    def window(self) -> ttk.Window | ttk.Toplevel: return self._window
+    def window(self) -> ttk.Window | ttk.Toplevel:
+        return self._window
+
     @property
-    def style(self) -> ttk.Style: return self._style
-    def theme_use(self, themename) -> None: self.style.theme_use(themename)
-    def mainloop(self) -> None: self.window.mainloop()
+    def style(self) -> ttk.Style:
+        return self._style
+
+    def theme_use(self, themename) -> None:
+        self.style.theme_use(themename)
+
+    def mainloop(self) -> None:
+        self.window.mainloop()

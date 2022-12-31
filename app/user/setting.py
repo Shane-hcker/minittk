@@ -23,14 +23,16 @@ class SettingPage(MyWindow):
         if not all(getList := self.entryQueue.getList()):
             [i.configure(bootstyle=DANGER) for i in self.entryQueue if not i.get()]
             Messagebox.show_error(title='错误', message='请保证每个输入框均有value', parent=self.window)
+            return
 
         [i.configure(bootstyle=DEFAULT) for i in self.entryQueue]
+        labelVal = self.labelQueue.getLabelValue()
         t = 0
         for _ in range(5):
-            self.cfgParser.set('MySQL', self.labelQueue[t]['text'], self.entryQueue[t].get())
+            self.cfgParser.set('MySQL', labelVal[t], getList[t])
             t += 1
         for _ in range(3):
-            self.cfgParser.set('App', self.labelQueue[t]['text'], self.entryQueue[t].get())
+            self.cfgParser.set('App', labelVal[t], getList[t])
             t += 1
         self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
         Messagebox.show_info(title='Success', message='保存成功, 部分配置需要重启生效', parent=self.window)

@@ -26,7 +26,7 @@ class MainPage(MyWindow):
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
 
-    def __enter__(self): return self
+    def __enter__(self) -> "MainPage": return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.mainloop()
@@ -35,7 +35,7 @@ class MainPage(MyWindow):
             raise exc_type()
 
     @property
-    def cursor(self):
+    def cursor(self) -> Cursor:
         return self._connection.csr
 
     def run_query(self, *args, **kwargs):
