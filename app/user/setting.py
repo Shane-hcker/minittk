@@ -16,9 +16,6 @@ class SettingPage(MyWindow):
         self.save_btn.pack(ipadx=5, anchor='nw', padx=5, pady=5)
         self.mysql_config().app_config()
 
-    def __enter__(self): pass
-    def __exit__(self, exc_type, exc_val, exc_tb): pass
-
     def save_config(self):
         if not all(getList := self.entryQueue.getList()):
             [i.configure(bootstyle=DANGER) for i in self.entryQueue if not i.get()]
@@ -62,3 +59,11 @@ class SettingPage(MyWindow):
         lFrame.pack(fill=X, padx=5, pady=5, side=TOP)
         self.grid(lFrame, self.cfgParser.getSectionItems('App'))
         return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.mainloop()
+        if exc_type is not None:
+            raise exc_type()

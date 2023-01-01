@@ -78,18 +78,16 @@ class MainPage(MyWindow):
         lFrame.pack(fill=BOTH, padx=50, pady=50, anchor='center')  # LabelFrame
         # Functioned Buttons Placements
         t = 0
-        funcName = ['创建表', '复制表', '迁移表', '导出表', '导入表', '创建库']
-        for i in range(1, 4):
-            for j in range(1, 3):
-                self.add(button, lFrame, text=funcName[t]).grid(
-                    column=i, row=j, ipadx=2, ipady=2, padx=2, pady=2)
-                t += 1
+        funcDict = {'表操作': None, '库操作': None, '命令行': None}
+        for k, v in funcDict.items():
+            self.add(button, lFrame, text=k, command=v).grid(column=t, row=0, ipadx=2, ipady=2, padx=2, pady=2)
+            t += 1
         # Combobox Placement
-        self.add(label, lFrame, text='选择表格: ').grid(column=0, row=4, columnspan=2)
+        self.add(label, lFrame, text='选择表格: ').grid(column=0, row=1)
         self.selectionCombobox = self.add(combobox, lFrame, width=25)
         self.selectionCombobox['value'] = [i[0] for i in self.show_tables()
                                            if len(self.run_query(f'desc {i[0]}')) == 4]
-        self.selectionCombobox.grid(column=0, row=5, columnspan=5, pady=5, ipady=5)
+        self.selectionCombobox.grid(column=0, row=2, columnspan=3, pady=5)
         self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
         self.panedwin.add(lFrame)
 
