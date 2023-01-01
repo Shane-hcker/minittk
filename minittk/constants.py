@@ -34,6 +34,7 @@ panedwindow = 'panedwindow'
 labelframe = 'labelframe'
 tooltip = 'tooltip'
 tableview = 'tableview'
+notebook = 'notebook'
 
 # TTK Widget Type
 WType = defaultdict(lambda: ttk.Label, {
@@ -49,5 +50,6 @@ WType = defaultdict(lambda: ttk.Label, {
     'radiobutton': ttk.Radiobutton,
     'panedwindow': ttk.PanedWindow,
     'labelframe': ttk.Labelframe,
-    'tableview': Tableview
+    'notebook': ttk.Notebook,
+    'tableview': Tableview,
 })

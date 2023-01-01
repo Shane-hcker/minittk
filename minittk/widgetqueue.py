@@ -5,8 +5,8 @@ from ttkbootstrap import Label
 class WidgetQueue(list):
     def __init__(self, *args):
         super().__init__()
-        for _ in args:
-            self.enqueue(_)
+        for item in args:
+            self.enqueue(item)
 
     def getList(self) -> list:
         """returns a list of widget.get() method results"""
