@@ -38,6 +38,9 @@ class MyWindow(metaclass=ABCMeta):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def __call__(self, *args, **kwargs) -> None:
+        self.mainloop()
+
     def add(self, wtype, parent=None, **kwargs):
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
         parent_ = self.window if parent_ is None else parent_
@@ -66,8 +69,9 @@ class MyWindow(metaclass=ABCMeta):
     def style(self) -> ttk.Style:
         return self._style
 
-    def theme_use(self, themename) -> None:
+    def theme_use(self, themename) -> ttk.Style:
         self.style.theme_use(themename)
+        return self.style
 
     def mainloop(self) -> None:
         self.window.mainloop()

@@ -17,14 +17,18 @@ class MainPage(MyWindow):
         # Child of rightFrame
         self.rightTopFrame = self.add(frame, parent=self.rightFrame, height=5)
         self.rightTopFrame.pack(fill=X)
-        tree_column = [dict(text='Name', stretch=True), dict(text='Value1', stretch=True),
-                       dict(text='Value2', stretch=True), dict(text='Last Modified', stretch=True)]
+        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Val1', 'stretch': True},
+                       {'text': 'Val2', 'stretch': True}, {'text': 'Last Modified', 'stretch': True}]
         self.tree = self.add_tabview(parent=self.rightFrame, coldata=tree_column, paginated=True,
                                      searchable=True, stripecolor=(self.style.colors.light, None),
                                      pagesize=20)
         self.tree.pack(fill=BOTH, expand=True)
         self.selectionCombobox: combobox = None
         self.themeCombobox: combobox = None
+
+    def __call__(self, *args, **kwargs) -> None:
+        self.mainloop()
+        self._connection.close()
 
     def __enter__(self) -> "MainPage": return self
 
@@ -38,14 +42,15 @@ class MainPage(MyWindow):
     def cursor(self) -> Cursor:
         return self._connection.csr
 
-    def run_query(self, *args, **kwargs):
+    def run_query(self, *args, **kwargs) -> tuple:
         return self._connection.run_query(*args, **kwargs)
 
-    def show_tables(self):
+    def show_tables(self) -> tuple:
         return self.run_query('show tables')
 
-    def use(self, db):
-        return self._connection.use(db)
+    def use(self, db) -> tuple:
+        self._connection.use(db)
+        return self.show_tables()
 
     @property
     def selectionCode(self):
@@ -90,6 +95,7 @@ class MainPage(MyWindow):
         self.selectionCombobox.grid(column=0, row=2, columnspan=3, pady=5)
         self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
         self.panedwin.add(lFrame)
+        return self
 
     def viewTab(self):
         self.add(button, self.rightTopFrame, text='用腾讯会议打开', bootstyle='SUCCESS',
@@ -106,9 +112,9 @@ class MainPage(MyWindow):
         theme_save.pack(padx=10, pady=10, side=LEFT)
         ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-reverse')
         self.panedwin.add(self.rightFrame)  # add frame to Panedwindow
+        return self
 
 
 if __name__ == '__main__':
-    with MainPage() as window:
-        window.sidebar()
-        window.viewTab()
+    window = MainPage().sidebar().viewTab()
+    window()

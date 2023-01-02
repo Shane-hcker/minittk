@@ -5,6 +5,10 @@ from collections import defaultdict
 import ttkbootstrap as ttk
 
 
+# PyMySQL fetch methods
+ONE = 'one'
+ALL = 'all'
+
 # Focuses
 FOCUS = 'focus'
 FOCUSIN = 'focusin'

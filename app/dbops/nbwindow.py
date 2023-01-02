@@ -27,6 +27,6 @@ class NotebookWindow(MyWindow):
         self.notebook.add(framepage, text=header)
         return framepage
 
-    def add_pages(self, *args, **kwargs):
+    def add_pages(self, headers: Iterable, **kwargs) -> list:
         """add several pages to notebook"""
-        return [self.add_page(i, **kwargs) for i in args]
+        return [self.add_page(header, **kwargs) for header in headers]

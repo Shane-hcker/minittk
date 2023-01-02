@@ -28,12 +28,12 @@ class UserConnection(pymysql.Connection):
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
         match fetch:
-            case None:
+            case None | 'all':
                 return self.csr.fetchall()
             case 'one':
                 return self.csr.fetchone()
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
 
-    def use(self, db: str):
+    def use(self, db: str) -> None:
         self.run_query(f'use {db}')
