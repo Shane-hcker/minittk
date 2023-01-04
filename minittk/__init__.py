@@ -11,6 +11,8 @@ from functools import partial
 from .widgetqueue import *
 from .constants import *
 from .window import *
+from .widgets import *
 from minittk.support.cfgparser import *
 from minittk.support.dbconn import *
 from minittk.support.uiautomation import *
+

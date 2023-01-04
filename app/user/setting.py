@@ -2,18 +2,18 @@
 from minittk import *
 
 
+@useconfig('./config.ini')
 class SettingPage(MyWindow):
     """功能:
     - config文件修改(MySQL, App)
     """
     def __init__(self):
-        self.cfgParser = MyConfigParser('./config.ini')
         posX, posY = self.cfgParser.getint('App', 'startup.x'), self.cfgParser.getint('App', 'startup.y')
         super().__init__('Title', '450x400', (False, False), (posX+600, posY+20))
         self.entryQueue = WidgetQueue()
         self.labelQueue = WidgetQueue()
-        self.save_btn = self.add(button, text='保存配置', command=self.save_config)
-        self.save_btn.pack(ipadx=5, anchor='nw', padx=5, pady=5)
+        self.save_btn = self.add(button, text='保存配置', command=self.save_config).rpack(
+                                 ipadx=5, anchor='nw', padx=5, pady=5)
         self.mysql_config().app_config()
 
     def save_config(self):
@@ -37,33 +37,21 @@ class SettingPage(MyWindow):
     def grid(self, parent, dic: dict):
         row = 0
         for k, v in dic.items():
-            label_ = self.add(label, parent, text=k)
-            label_.grid(column=0, row=row, pady=2, padx=45)
+            label_ = self.add(label, parent, text=k).rgrid(column=0, row=row, pady=2, padx=45)
             self.labelQueue.enqueue(label_)
-            input_ = self.add(entry, parent)
-            input_.grid(column=1, row=row, pady=2, padx=5)
+            input_ = self.add(entry, parent).rgrid(column=1, row=row, pady=2, padx=5)
             input_.insert(END, v)
             self.entryQueue.enqueue(input_)
             row += 1
 
     def mysql_config(self) -> "SettingPage":
         """MySQL Config Labelframe"""
-        lFrame = self.add(labelframe, text='数据库配置', padding=5)
-        lFrame.pack(fill=X, padx=5, side=TOP)
+        lFrame = self.add(labelframe, text='数据库配置', padding=5).rpack(fill=X, padx=5, side=TOP)
         self.grid(lFrame, self.cfgParser.getSectionItems('MySQL'))
         return self
 
     def app_config(self) -> "SettingPage":
         """App Config Labelframe"""
-        lFrame = self.add(labelframe, text='软件配置', padding=5)
-        lFrame.pack(fill=X, padx=5, pady=5, side=TOP)
+        lFrame = self.add(labelframe, text='软件配置', padding=5).rpack(fill=X, padx=5, pady=5, side=TOP)
         self.grid(lFrame, self.cfgParser.getSectionItems('App'))
         return self
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.mainloop()
-        if exc_type is not None:
-            raise exc_type()

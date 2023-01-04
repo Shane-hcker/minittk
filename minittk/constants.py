@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
-from ttkbootstrap.tableview import Tableview
 from ttkbootstrap.constants import *
 from collections import defaultdict
 import ttkbootstrap as ttk
+from .widgets import *
 
 
 # PyMySQL fetch methods
@@ -42,18 +42,18 @@ notebook = 'notebook'
 
 # TTK Widget Type
 WType = defaultdict(lambda: ttk.Label, {
-    'button': ttk.Button,
-    'combobox': ttk.Combobox,
-    'entry': ttk.Entry,
-    'label': ttk.Label,
-    'scrolledtext': ttk.ScrolledText,
-    'frame': ttk.Frame,
-    'text': ttk.Text,
-    'treeview': ttk.Treeview,
-    'checkbutton': ttk.Checkbutton,
-    'radiobutton': ttk.Radiobutton,
-    'panedwindow': ttk.PanedWindow,
-    'labelframe': ttk.Labelframe,
-    'notebook': ttk.Notebook,
+    'button': Button,
+    'combobox': Combobox,
+    'entry': Entry,
+    'label': Label,
+    'scrolledtext': ScrolledText,
+    'frame': Frame,
+    'text': Text,
+    'treeview': Treeview,
+    'checkbutton': Checkbutton,
+    'radiobutton': Radiobutton,
+    'panedwindow': Panedwindow,
+    'labelframe': Labelframe,
+    'notebook': Notebook,
     'tableview': Tableview,
 })

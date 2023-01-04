@@ -19,13 +19,13 @@ class UIAutomation:
     @staticmethod
     def __waitForLocate(target):
         t = 0
-        while pyautogui.locateCenterOnScreen(target) is None:
+        while (res := pyautogui.locateCenterOnScreen(target)) is None:
             t += 1
             if t >= 15:
                 raise LookupError('Location not found')
             sleep(1)
             print(f'going {t}')
-        return pyautogui.locateCenterOnScreen(target)
+        return res
 
     @staticmethod
     def openwithTX(selectionCode: Tuple[str, int]):
@@ -37,7 +37,7 @@ class UIAutomation:
             print(f'goto {lang} v')
             code, pwd = selectionCode
             pyautogui.typewrite(code)
-            sleep(1)
+            sleep(1.5)
             pyautogui.leftClick(UIAutomation.__waitForLocate(f'./meetingapps/tx/join_{lang}.png'))
             if pwd == 'None':
                 print(f'{lang} ui runned')
@@ -62,8 +62,11 @@ class UIAutomation:
             print('ok')
             if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_ch.png') is not None:
                 openLangTX(lang='ch')
-            elif pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
+                return
+            if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
                 openLangTX(lang='en')
+                return
+            raise LookupError
         except LookupError:
             raise LookupError('failed to launch')
 

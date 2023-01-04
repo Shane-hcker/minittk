@@ -34,3 +34,10 @@ class MyConfigParser(configparser.ConfigParser):
         if not self.has_section(section):
             raise ValueError(f'Section \'{section}\' does not exist')
         return {i[0]: int(i[1]) if i[0] == 'port' else i[1] for i in self.items(section)}
+
+
+def useconfig(cfgfile=None):
+    def inner(cls):
+        cls.cfgParser = MyConfigParser(cfgfile=cfgfile)
+        return cls
+    return inner
