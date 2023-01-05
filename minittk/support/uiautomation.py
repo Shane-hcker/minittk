@@ -29,6 +29,7 @@ class UIAutomation:
 
     @staticmethod
     def openwithTX(selectionCode: Tuple[str, int]):
+        """TODO 优化该类代码的可读性"""
         if not selectionCode:
             Messagebox.show_error(message='你未选择任何数据', title='错误')
             return
