@@ -1,11 +1,13 @@
 # -*- encoding: utf-8 -*-
 import pymysql
 
-from .cfgparser import MyConfigParser
+from minittk.support.cfgparser import MyConfigParser
 
 
 class UserConnection(pymysql.Connection):
-    """User database connection"""
+    """User database connection
+    TODO 添加装饰时将该类的方法(需要改写成被添加装饰器的类)全部导入(包括ConfigParser+UserConnection)
+    """
     _instance = None
     _init_flag = False
 
@@ -21,19 +23,37 @@ class UserConnection(pymysql.Connection):
         if self.__class__._init_flag:
             return
         self.__class__._init_flag = True
-        self.cfgParser = MyConfigParser(cfgfile=cfgfile)
-        super().__init__(**self.cfgParser.getSectionItems('MySQL'), autocommit=True)
+        self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
+        super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
+
+    @staticmethod
+    def usemysql(cfgfile=None):
+        def inner(cls):
+            cls._connection = UserConnection(cfgfile=cfgfile)
+            cls.run_query = lambda self, *args, **kwargs: cls._connection.run_query(*args, **kwargs)
+            cls.show_databases = lambda self: cls._connection.show_databases()
+            cls.show_tables = lambda self: cls._connection.show_tables()
+            cls.cursor = property(lambda self: cls._connection.csr)
+            print(f'{cls} runned usemysql()')
+            return cls
+        return inner
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
         match fetch:
-            case None:
+            case None | 'all':
                 return self.csr.fetchall()
             case 'one':
                 return self.csr.fetchone()
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
 
-    def use(self, db: str):
+    def use(self, db: str) -> None:
         self.run_query(f'use {db}')
+
+    def show_tables(self):
+        return self.run_query('show tables')
+
+    def show_databases(self):
+        return self.run_query('show databases')

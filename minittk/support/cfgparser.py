@@ -19,6 +19,14 @@ class MyConfigParser(configparser.ConfigParser):
         self.cfgfile = cfgfile
         self.read(cfgfile, encoding='utf-8') if cfgfile is not None else ...
 
+    @staticmethod
+    def useconfig(cfgfile=None):
+        def inner(cls):
+            cls.cfgParser = MyConfigParser(cfgfile=cfgfile)
+            print(f'{cls} runned useconfig()')
+            return cls
+        return inner
+
     def loadfromFile(self, cfgfile) -> None:
         self.__init__(cfgfile)
 

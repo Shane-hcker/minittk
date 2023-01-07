@@ -1,9 +1,8 @@
 # -*- encoding: utf-8 -*-
-from abc import *
 from minittk import *
 
 
-class MyWindow(metaclass=ABCMeta):
+class MyWindow:
     father_exists = False  # if father exists
     windowType = None
 
@@ -30,13 +29,16 @@ class MyWindow(metaclass=ABCMeta):
         self.window.resizable(*resizable)
         self._style = ttk.Style()
 
-    @abstractmethod
-    def __enter__(self):
-        pass
+    def __enter__(self) -> "MyWindow":
+        return self
 
-    @abstractmethod
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.mainloop()
+        if exc_type is not None:
+            raise exc_type()
+
+    def __call__(self, *args, **kwargs) -> None:
+        self.mainloop()
 
     def add(self, wtype, parent=None, **kwargs):
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
@@ -66,8 +68,9 @@ class MyWindow(metaclass=ABCMeta):
     def style(self) -> ttk.Style:
         return self._style
 
-    def theme_use(self, themename) -> None:
+    def theme_use(self, themename) -> ttk.Style:
         self.style.theme_use(themename)
+        return self.style
 
     def mainloop(self) -> None:
         self.window.mainloop()

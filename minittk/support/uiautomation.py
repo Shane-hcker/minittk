@@ -5,7 +5,7 @@ from time import sleep
 from typing import *
 import pyautogui
 
-from .cfgparser import MyConfigParser
+from minittk.support.cfgparser import MyConfigParser
 
 
 class UIAutomation:
@@ -18,14 +18,14 @@ class UIAutomation:
 
     @staticmethod
     def __waitForLocate(target):
-        t = 0
-        while pyautogui.locateCenterOnScreen(target) is None:
-            t += 1
-            if t >= 15:
+        continue_waiting = 0
+        while (locate_result := pyautogui.locateCenterOnScreen(target)) is None:
+            if continue_waiting >= 15:
                 raise LookupError('Location not found')
+            continue_waiting += 1
             sleep(1)
-            print(f'going {t}')
-        return pyautogui.locateCenterOnScreen(target)
+            print(f'waiting for location... {continue_waiting}s')
+        return locate_result
 
     @staticmethod
     def openwithTX(selectionCode: Tuple[str, int]):
@@ -33,23 +33,22 @@ class UIAutomation:
             Messagebox.show_error(message='你未选择任何数据', title='错误')
             return
 
-        def openLangTX(lang=None):
-            print(f'goto {lang} v')
-            code, pwd = selectionCode
-            pyautogui.typewrite(code)
-            sleep(1)
-            pyautogui.leftClick(UIAutomation.__waitForLocate(f'./meetingapps/tx/join_{lang}.png'))
-            if pwd == 'None':
-                print(f'{lang} ui runned')
+        def openLangTX(app_lang=None):
+            print(f'switched to {app_lang} mode')
+            meetingid, password = selectionCode
+            pyautogui.typewrite(meetingid)
+            sleep(1.5)
+            pyautogui.leftClick(UIAutomation.__waitForLocate(f'./meetingapps/tx/join_{app_lang}.png'))
+            if password == 'None':
+                print(f'{app_lang} version ran')
                 return
             UIAutomation.__waitForLocate('./meetingapps/tx/hide_pwd.png')
-            pyautogui.typewrite(pwd)
+            pyautogui.typewrite(password)
             pyautogui.press('enter')
-            print(f'{lang} ui runned')
+            print(f'{app_lang} version ran')
             return
 
-        cfgParser = MyConfigParser()
-        startfile(cfgParser.get('Launch', 'tencentmeeting'))
+        startfile(MyConfigParser().get('Launch', 'tencentmeeting'))
         try:
             join = UIAutomation.__waitForLocate('./meetingapps/tx/join.png')
             pyautogui.leftClick(join)
@@ -59,19 +58,21 @@ class UIAutomation:
             pyautogui.leftClick(down)
             pyautogui.hotkey('ctrl', 'a')  # ensure that no code history remained
             pyautogui.press('backspace')
-            print('ok')
+            print('pending to decide language options...')
             if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_ch.png') is not None:
-                openLangTX(lang='ch')
-            elif pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
-                openLangTX(lang='en')
-        except LookupError:
-            raise LookupError('failed to launch')
+                openLangTX('ch')
+                return
+            if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
+                openLangTX('en')
+                return
+            raise LookupError
+        except LookupError as e:
+            print(f'{e}: failed to locate. Error.')
 
     @staticmethod
     def openwithZoom(selectionCode: Tuple[str, int]):
-        cfgParser = MyConfigParser()
-        code, pwd = selectionCode
-        startfile(cfgParser.get('Launch', 'zoom'))
+        meetingid, password = selectionCode
+        startfile(MyConfigParser().get('Launch', 'zoom'))
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_meeting_zh.png'))
-        pyautogui.typewrite(code)
+        pyautogui.typewrite(meetingid)
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_zh.png'))
