@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 import pymysql
 
-from .cfgparser import MyConfigParser
+from minittk.support.cfgparser import MyConfigParser
 
 
 class UserConnection(pymysql.Connection):
@@ -23,9 +23,21 @@ class UserConnection(pymysql.Connection):
         if self.__class__._init_flag:
             return
         self.__class__._init_flag = True
-        self.cfgParser = MyConfigParser(cfgfile=cfgfile)
-        super().__init__(**self.cfgParser.getSectionItems('MySQL'), autocommit=True)
+        self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
+        super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
+
+    @staticmethod
+    def usemysql(cfgfile=None):
+        def inner(cls):
+            cls._connection = UserConnection(cfgfile=cfgfile)
+            cls.run_query = lambda self, *args, **kwargs: cls._connection.run_query(*args, **kwargs)
+            cls.show_databases = lambda self: cls._connection.show_databases()
+            cls.show_tables = lambda self: cls._connection.show_tables()
+            cls.cursor = property(lambda self: cls._connection.csr)
+            print(f'{cls} runned usemysql()')
+            return cls
+        return inner
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
@@ -40,9 +52,8 @@ class UserConnection(pymysql.Connection):
     def use(self, db: str) -> None:
         self.run_query(f'use {db}')
 
+    def show_tables(self):
+        return self.run_query('show tables')
 
-def usemysql(cfgfile=None):
-    def inner(cls):
-        cls._connection = UserConnection(cfgfile=cfgfile)
-        return cls
-    return inner
+    def show_databases(self):
+        return self.run_query('show databases')

@@ -19,6 +19,14 @@ class MyConfigParser(configparser.ConfigParser):
         self.cfgfile = cfgfile
         self.read(cfgfile, encoding='utf-8') if cfgfile is not None else ...
 
+    @staticmethod
+    def useconfig(cfgfile=None):
+        def inner(cls):
+            cls.cfgParser = MyConfigParser(cfgfile=cfgfile)
+            print(f'{cls} runned useconfig()')
+            return cls
+        return inner
+
     def loadfromFile(self, cfgfile) -> None:
         self.__init__(cfgfile)
 
@@ -34,10 +42,3 @@ class MyConfigParser(configparser.ConfigParser):
         if not self.has_section(section):
             raise ValueError(f'Section \'{section}\' does not exist')
         return {i[0]: int(i[1]) if i[0] == 'port' else i[1] for i in self.items(section)}
-
-
-def useconfig(cfgfile=None):
-    def inner(cls):
-        cls.cfgParser = MyConfigParser(cfgfile=cfgfile)
-        return cls
-    return inner

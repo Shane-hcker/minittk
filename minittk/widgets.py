@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+from typing import *
 from ttkbootstrap.tableview import Tableview as ttkTableView
 import ttkbootstrap as ttk
 import tkinter.ttk
@@ -35,7 +36,12 @@ class Button(MyWidget, ttk.Button):
 
 
 class Combobox(MyWidget, ttk.Combobox):
-    pass
+    @property
+    def values(self): return self['values']
+
+    @values.setter
+    def values(self, values: List[Any]):
+        self['values'] = values
 
 
 class Entry(MyWidget, ttk.Entry):
@@ -46,6 +52,9 @@ class Entry(MyWidget, ttk.Entry):
 class Label(MyWidget, ttk.Label):
     @property
     def value(self): return self['text']
+
+    @value.setter
+    def value(self, text): self['text'] = text
 
 
 class ScrolledText(MyWidget, ttk.ScrolledText):

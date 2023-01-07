@@ -8,11 +8,10 @@ from ttkbootstrap.tooltip import ToolTip
 from pymysql.cursors import Cursor
 from functools import partial
 
-from .widgetqueue import *
-from .constants import *
-from .window import *
-from .widgets import *
+from minittk.widgetqueue import *
+from minittk.constants import *
+from minittk.window import *
+from minittk.widgets import *
 from minittk.support.cfgparser import *
 from minittk.support.dbconn import *
 from minittk.support.uiautomation import *
-

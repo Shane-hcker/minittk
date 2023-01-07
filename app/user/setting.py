@@ -2,12 +2,13 @@
 from minittk import *
 
 
-@useconfig('./config.ini')
+@MyConfigParser.useconfig(r'D:\minittk\app\user\config.ini')
 class SettingPage(MyWindow):
     """功能:
     - config文件修改(MySQL, App)
     """
     def __init__(self):
+        print(f'__init__(): {self}, id: {id(self)}')
         posX, posY = self.cfgParser.getint('App', 'startup.x'), self.cfgParser.getint('App', 'startup.y')
         super().__init__('Title', '450x400', (False, False), (posX+600, posY+20))
         self.entryQueue = WidgetQueue()
