@@ -20,9 +20,9 @@ class UIAutomation:
     def __waitForLocate(target):
         continue_waiting = 0
         while (locate_result := pyautogui.locateCenterOnScreen(target)) is None:
-            continue_waiting += 1
             if continue_waiting >= 15:
                 raise LookupError('Location not found')
+            continue_waiting += 1
             sleep(1)
             print(f'waiting for location... {continue_waiting}s')
         return locate_result

@@ -3,7 +3,7 @@ from nbwindow import NotebookWindow
 from minittk import *
 
 
-@usemysql(r'D:\minittk\app\user\config.ini')
+@UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
 class TableOperations(NotebookWindow):
     def __init__(self):
         super().__init__("Title", "600x500", (True, True))
@@ -33,6 +33,7 @@ class TableOperations(NotebookWindow):
                        "`Last Modified` date not null)"
 
     def pageGenerate_table(self) -> "TableOperations":
+        # TODO 完成表格操作
         lFrame = self.add(labelframe, self.tableops, text="创建表格").rpack(fill=BOTH, padx=5, side=TOP)
         add = partial(self.add, parent=lFrame)
 
