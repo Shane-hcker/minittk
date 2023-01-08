@@ -15,15 +15,15 @@ class MainPage(MyWindow):
         self.rightSideFrame = self.add(frame)  # r < 右侧的 Panedwindow
         # Child of rightFrame
         self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
-        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Val1', 'stretch': True},
-                       {'text': 'Val2', 'stretch': True}, {'text': 'Last Modified', 'stretch': True}]
+        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Meeting ID', 'stretch': True},
+                       {'text': 'Password', 'stretch': True}, {'text': 'Last Modified', 'stretch': True}]
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, stripecolor=(self.style.colors.light, None),
                                      pagesize=20).rpack(fill=BOTH, expand=True)
-        self.current_database: label = None
-        self.databaseCombobox: combobox = None
-        self.selectionCombobox: combobox = None
-        self.themeCombobox: combobox = None
+        self.current_database = None
+        self.databaseCombobox = None
+        self.selectionCombobox = None
+        self.themeCombobox = None
         self.isTableLengthOutOfRange: bool = False
 
     def __call__(self, *args, **kwargs) -> None:
@@ -41,14 +41,10 @@ class MainPage(MyWindow):
         return self.show_tables()
 
     @property
-    def selectionCode(self) -> Tuple[Any, Any]:
-        get_selection = self.tree.view.focus()  # selection()
-        value = self.tree.view.set(get_selection)
+    def selectedOptionContent(self) -> Tuple[Any, Any]:
+        # focus() & selection()
+        value = self.tree.view.set(self.tree.view.focus())
         return None if not value else (value['1'], value['2'])  # set()获取当前row的值
-
-    def saveThemeChange(self):
-        self.cfgParser.set('App', 'theme', self.curr_theme)
-        self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
 
     def __databaseComboboxSelected(self, event):
         get_selected = self.databaseCombobox.get()
@@ -93,9 +89,13 @@ class MainPage(MyWindow):
         self.theme_use(self.curr_theme)
         self.themeCombobox.selection_clear()
 
+    def saveThemeChange(self):
+        self.cfgParser.set('App', 'theme', self.curr_theme)
+        self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
+
     def createSidebar(self):
         lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10, bootstyle='success').rpack(
-                          fill=BOTH, padx=50, pady=50, anchor='center')  # LabelFrame
+                          fill=X, padx=50, pady=50, side=TOP)  # LabelFrame
 
         column = 0
         funcDict = {'表操作': None, '库操作': None, '命令行': None}
@@ -120,9 +120,9 @@ class MainPage(MyWindow):
 
     def createViewTab(self):
         self.add(button, self.rightSideTopFrame, text='用腾讯会议打开', bootstyle='SUCCESS',
-                 command=lambda: UIAutomation.openwithTX(self.selectionCode)).pack(padx=10, pady=10, side=LEFT)
+                 command=lambda: UIAutomation.openwithTX(self.selectedOptionContent)).pack(padx=10, pady=10, side=LEFT)
         self.add(button, self.rightSideTopFrame, text='用Zoom会议打开', bootstyle='INFO',
-                 command=lambda: UIAutomation.openwithZoom(self.selectionCode)).pack(pady=10, side=LEFT)
+                 command=lambda: UIAutomation.openwithZoom(self.selectedOptionContent)).pack(pady=10, side=LEFT)
 
         self.add(button, self.rightSideTopFrame, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
         self.add(label, self.rightSideFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(

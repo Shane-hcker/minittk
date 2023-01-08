@@ -12,6 +12,9 @@ class MyConfigParser(configparser.ConfigParser):
         return cls._instance
 
     def __init__(self, cfgfile=None):
+        if not cfgfile:
+            return
+
         if self.__class__._init_flag:
             return
         super().__init__()

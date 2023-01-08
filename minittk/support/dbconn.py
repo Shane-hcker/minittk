@@ -26,6 +26,11 @@ class UserConnection(pymysql.Connection):
         self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
         super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
+        self.tableDescription = [f"create table if not exists ",
+                                 " (`Name` char(255) not null primary key default '', "
+                                 "`Value` bigint(255) not null, "
+                                 "`Password` bigint(255) null, "
+                                 "`Last Modified` date null default CURDATE())"]
 
     @staticmethod
     def usemysql(cfgfile=None):
@@ -37,7 +42,15 @@ class UserConnection(pymysql.Connection):
             cls.cursor = property(lambda self: cls._connection.csr)
             print(f'{cls} runned usemysql()')
             return cls
+
         return inner
+
+    def create_table(self, table_name):
+        self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
+
+    def insert(self, table, *values):
+        self.run_query(f'insert into {table} values{values}')
+        return values
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)

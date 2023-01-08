@@ -43,7 +43,7 @@ class MyWindow:
     def add(self, wtype, parent=None, **kwargs):
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
         parent_ = self.window if parent_ is None else parent_
-        widget = WType[wtype](parent_, **kwargs)
+        widget = wtype(parent_, **kwargs)
         return widget
 
     def add_trview(self, columns, heads, height=None, parent=None) -> ttk.Treeview:

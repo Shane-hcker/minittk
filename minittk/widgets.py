@@ -7,7 +7,7 @@ import tkinter.ttk
 
 __all__ = ['Button', 'Combobox', 'Entry', 'Label', 'ScrolledText', 'Frame',
            'Text', 'Treeview', 'Checkbutton', 'Radiobutton', 'Panedwindow', 'Labelframe',
-           'Notebook', 'Tableview']
+           'Notebook', 'Tableview', 'Separator']
 
 
 class MyWidget(tkinter.ttk.Widget):
@@ -32,6 +32,10 @@ class MyWidget(tkinter.ttk.Widget):
 
 
 class Button(MyWidget, ttk.Button):
+    pass
+
+
+class Separator(MyWidget, ttk.Separator):
     pass
 
 
