@@ -42,15 +42,7 @@ class UserConnection(pymysql.Connection):
             cls.cursor = property(lambda self: cls._connection.csr)
             print(f'{cls} runned usemysql()')
             return cls
-
         return inner
-
-    def create_table(self, table_name):
-        self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
-
-    def insert(self, table, *values):
-        self.run_query(f'insert into {table} values{values}')
-        return values
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
@@ -61,6 +53,21 @@ class UserConnection(pymysql.Connection):
                 return self.csr.fetchone()
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
+
+    def create_table(self, table_name):
+        self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
+
+    def insert(self, table_name, *values):
+        self.run_query(f'insert into {table_name} values{values}')
+        return values
+
+    def select(self, *args, table_name=None):
+        match args:
+            case ('*', ) | ():
+                return self.run_query(f'select * from {table_name}')
+            case _:
+                query_string = f'select {str(args)} from {table_name}'.replace('(', '').replace(')', '').replace('\'', '')
+                return self.run_query(query_string)
 
     def use(self, db: str) -> None:
         self.run_query(f'use {db}')

@@ -13,20 +13,37 @@ class TableOperations(NotebookWindow):
         self.tableops, self.dataops = self.add_pages(("表格操作", "表格数据"))
         self.tablecreateName = None
         self.createTableBtn = None
+        self.__default_header = ['Name', 'Value', 'Password']
         self.pageCreate_table().pageCreate_data()
 
+    def open(*args, **kwargs):
+        return partial(open, newline='')(*args, **kwargs)
+
     def __import_from_csv(self):
-        filename = filedialog.askopenfilename(filetypes=[('CSV', 'csv')], parent=self.window)
-        csv_lines = csv.DictReader(open(filename, newline='', encoding='utf-8'), ['Name', 'Meeting ID', 'Password'])
-        if (tableName := filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]).isdigit() or not tableName.isascii():
+        filename = filedialog.askopenfilename(filetypes=[('CSV', 'csv')], parent=self.window, title='通过csv导入')
+
+        if ((tableName := filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]).isdigit() or
+           not tableName.isascii()):
             raise ValueError('tableName 仅支持字母/数字+字母+字符')
         # todo 表格数据不能为空
-        self.create_table(tableName)
-        for line in csv_lines:
-            self._connection.insert(tableName, line['Name'], line['Meeting ID'], line['Password'])
+
+        with self.open(filename, encoding='utf-8') as f:
+            csv_lines = csv.DictReader(f, self.__default_header)
+            self.create_table(tableName)
+            for line in csv_lines:
+                self._connection.insert(tableName, line['Name'], line['Value'], line['Password'])
 
     def __export_as_csv(self):
-        pass
+        filename = filedialog.asksaveasfilename(initialfile='Untitled.csv', defaultextension='.csv',
+                                                filetypes=[('CSV', 'csv')], parent=self.window, title='导出为csv')
+        # with self.open(filename, 'w', encoding='utf-8') as f:
+        #     dictWriter = csv.DictWriter(f, self.__default_header)
+        #     dictWriter.writeheader()
+        # todo userconnection select() *args改成可以放到sql_dialect里面的
+        data_list = [{'Name': name.title(), 'Value': value, 'Password': password}
+                     for name, value, password, _ in self._connection.select(table_name='tencenttable1')]
+        print(data_list)
+        # dictWriter.writerows(data_list)
 
     def create_table(self, table_name):
         self._connection.create_table(table_name)
@@ -62,6 +79,7 @@ class TableOperations(NotebookWindow):
         self.createTableBtn = add(button, state=DISABLED, bootstyle=SUCCESS, command=self.__createTable,
                                   text='创建').rpack(side=LEFT, padx=5)
         add(button, text='导入', command=self.__import_from_csv).pack(side=RIGHT, padx=5)
+        add(button, text='导出', command=self.__export_as_csv).pack(side=RIGHT)
         return self
 
     def pageCreate_data(self) -> "TableOperations":
@@ -69,5 +87,5 @@ class TableOperations(NotebookWindow):
 
 
 if __name__ == "__main__":
-    with TableOperations() as window:
-        pass
+    window = TableOperations()
+    window()

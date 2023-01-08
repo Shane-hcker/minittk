@@ -15,7 +15,7 @@ class MainPage(MyWindow):
         self.rightSideFrame = self.add(frame)  # r < 右侧的 Panedwindow
         # Child of rightFrame
         self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
-        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Meeting ID', 'stretch': True},
+        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Value', 'stretch': True},
                        {'text': 'Password', 'stretch': True}, {'text': 'Last Modified', 'stretch': True}]
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, stripecolor=(self.style.colors.light, None),
