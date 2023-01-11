@@ -28,14 +28,14 @@ class UIAutomation:
         return locate_result
 
     @staticmethod
-    def openwithTX(selectionCode: Tuple[str, int]):
-        if not selectionCode:
+    def openwithTX(login_content: Tuple[str, int]):
+        if not login_content:
             Messagebox.show_error(message='你未选择任何数据', title='错误')
             return
 
         def openLangTX(app_lang=None):
             print(f'switched to {app_lang} mode')
-            meetingid, password = selectionCode
+            meetingid, password = login_content
             pyautogui.typewrite(meetingid)
             sleep(1.5)
             pyautogui.leftClick(UIAutomation.__waitForLocate(f'./meetingapps/tx/join_{app_lang}.png'))
@@ -70,8 +70,12 @@ class UIAutomation:
             print(f'{e}: failed to locate. Error.')
 
     @staticmethod
-    def openwithZoom(selectionCode: Tuple[str, int]):
-        meetingid, password = selectionCode
+    def openwithZoom(login_content: Tuple[str, int]):
+        if not login_content:
+            Messagebox.show_error(message='你未选择任何数据', title='错误')
+            return
+
+        meetingid, password = login_content
         startfile(MyConfigParser().get('Launch', 'zoom'))
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_meeting_zh.png'))
         pyautogui.typewrite(meetingid)

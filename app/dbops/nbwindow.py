@@ -10,8 +10,7 @@ class NotebookWindow(MyWindow):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.notebook = self.add(notebook)
-        self.notebook.pack(expand=True, fill=BOTH, padx=10, pady=10)
+        self.notebook = self.add(notebook).rpack(expand=True, fill=BOTH, padx=10, pady=10)
 
     def __enter__(self):
         return self

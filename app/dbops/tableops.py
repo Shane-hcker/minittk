@@ -1,55 +1,92 @@
 # -*- encoding: utf-8 -*-
-from nbwindow import NotebookWindow
+import csv
 from minittk import *
 
 
 @UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
-class TableOperations(NotebookWindow):
-    def __init__(self):
-        super().__init__("Title", "600x500", (True, True))
-        self.opsList = ("表格操作", "表格数据")  # Operation Lists
-        self.tableops, self.dataops = self.add_pages(self.opsList)
-        self.tablecreateName = None
-        self.createTableBtn = None
-        self.pageGenerate_table().pageCreate_data()
+class TableOperationMenu(Menu):
+    """
+    todo 实现tableoperations相关功能, 并集成到mainpg
+    - 表格操作
+      - 创建
+        - 导入
+        - 命名空表格
+      - 删除
+      - 创建副本表格(new name)
+      - 重命名
+    """
+    def __init__(self, master):
+        super().__init__(master)
+        self.build_rightClickMenu()
+        self.master.bind('<Button-3>', self.post_event)
 
-    def __isTitleLegit(self, x):
-        if not x:
-            self.createTableBtn['state'] = DISABLED
-            return False
-        x = str(x)
-        if x.isdigit():
-            self.createTableBtn['state'] = DISABLED
-            return False
-        self.createTableBtn['state'] = NORMAL
-        return True
+    # building right click menu
+    def build_rightClickMenu(self):
+        config = {
+            'export_table': {
+                'label': MessageCatalog.translate('导出表格为csv'),
+                'command': None
+            },
+            'import_table': {
+                'label': MessageCatalog.translate('导入csv'),
+                'command': self.import_from_csv
+            },
+            'create_table': {
+                'label': MessageCatalog.translate('创建表格'),
+                'command': self.create_table
+            },
+            'delete_table': {
+                'label': MessageCatalog.translate('删除表格'),
+                'command': self.drop_table
+            }
+        }
+        self.add_command(cnf=config['import_table'])
+        self.add_command(cnf=config['export_table'])
+        self.add_separator()
+        self.add_command(cnf=config['delete_table'])
+        self.add_command(cnf=config['create_table'])
 
-    def __createTable(self):
-        if not (tableTitle := self.tablecreateName.value):
-            return
-        createFormat = f"create table if not exists {tableTitle} (" \
-                       "`Name` char(255) not null primary key default '', " \
-                       "`Value` bigint(255) not null, `Password` bigint(255) null, " \
-                       "`Last Modified` date not null)"
+    # All commands below
+    def import_from_csv(self):
+        filename = filedialog.askopenfilename(filetypes=[('CSV', 'csv')], parent=self.window, title='通过csv导入')
 
-    def pageGenerate_table(self) -> "TableOperations":
-        # TODO 完成表格操作
-        lFrame = self.add(labelframe, self.tableops, text="创建表格").rpack(fill=BOTH, padx=5, side=TOP)
-        add = partial(self.add, parent=lFrame)
+        if ((tableName := filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]).isdigit() or
+           not tableName.isascii()):
+            raise ValueError('tableName 仅支持字母/数字+字母+字符')
 
-        add(label, text="表格名称:").pack(side=LEFT, padx=5, pady=15)
-        isTitleLegit = self.window.register(self.__isTitleLegit)
-        add(button, text='检查表名', bootstyle=SECONDARY).pack(side=LEFT, padx=5, pady=15)
-        self.tablecreateName = add(entry, bootstyle=SUCCESS, validate=FOCUS,
-                                   validatecommand=(isTitleLegit, '%P')).rpack(side=LEFT, padx=5, pady=15)
-        self.createTableBtn = add(button, text='创建', state=DISABLED, bootstyle=SUCCESS)
-        self.createTableBtn.pack(side=LEFT, padx=5, pady=15)
-        return self
+        # todo 表格数据不能为空
+        with open(filename, newline='', encoding='utf-8') as f:
+            csv_lines = csv.reader(f)
+            self.create_table(tableName)
+            for line in csv_lines:
+                self.tinsert(tableName, line[0], line[1], line[2])
 
-    def pageCreate_data(self) -> "TableOperations":
-        return self
+    def drop_table(self) -> None:
+        table_name = self.master.get()
+        yesno = Messagebox.yesno(title='delete', message='delete?', parent=self.master)
+        print(MessageCatalog.translate(yesno))
+        self.drop(drop_type='table', name=table_name)
 
+    def create_table(self, table_name):
+        # if not (tableTitle := self.tablecreateName.value):
+        #     self.tablecreateName.configure(bootstyle=DANGER)
+        #     self.createTableBtn.set_state('disabled')
+        #     return
+        # self.create_table(tableTitle)
+        # print(f'created table \'{tableTitle}\'')
+        pass
 
-if __name__ == "__main__":
-    with TableOperations() as window:
+    def isTitleLegit(self):
+        # if not (get_name_entry := self.tablecreateName.value):
+        #     self.createTableBtn.set_state('disabled')
+        #     self.tablecreateName.configure(bootstyle=DANGER)
+        #     return
+        #
+        # if get_name_entry.isdigit():
+        #     self.createTableBtn.set_state('disabled')
+        #     self.tablecreateName.configure(bootstyle=DANGER)
+        #     return
+        #
+        # self.createTableBtn.set_state('normal')
+        # self.tablecreateName.configure(bootstyle=PRIMARY)
         pass
