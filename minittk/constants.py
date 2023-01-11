@@ -1,18 +1,19 @@
 # -*- encoding: utf-8 -*-
 from ttkbootstrap.constants import *
-from collections import defaultdict
 import ttkbootstrap as ttk
+from typing import *
 from .widgets import *
 
 
 # PyMySQL fetch methods
-ONE = 'one'
-ALL = 'all'
+ONE: Final = 'one'
+ALL: Final = 'all'
+MANY: Final = 'many'
 
 # Focuses
-FOCUS = 'focus'
-FOCUSIN = 'focusin'
-FOCUSOUT = 'focusout'
+FOCUS: Final = 'focus'
+FOCUSIN: Final = 'focusin'
+FOCUSOUT: Final = 'focusout'
 
 # Vars
 strvar = ttk.StringVar
@@ -39,3 +40,4 @@ labelframe = Labelframe
 tableview = Tableview
 notebook = Notebook
 separator = Separator
+menu = Menu

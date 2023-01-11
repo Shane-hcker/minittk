@@ -5,12 +5,15 @@ import ttkbootstrap as ttk
 import tkinter.ttk
 
 
-__all__ = ['Button', 'Combobox', 'Entry', 'Label', 'ScrolledText', 'Frame',
+__all__ = ['MyWidget', 'Button', 'Combobox', 'Entry', 'Label', 'ScrolledText',
            'Text', 'Treeview', 'Checkbutton', 'Radiobutton', 'Panedwindow', 'Labelframe',
-           'Notebook', 'Tableview', 'Separator']
+           'Notebook', 'Tableview', 'Separator', 'Menu', 'Frame']
 
 
 class MyWidget(tkinter.ttk.Widget):
+    def set_state(self, state):
+        self['state'] = state
+
     def rpack(self, *args, **kwargs):
         """returned pack"""
         self.pack(*args, **kwargs)
@@ -30,6 +33,10 @@ class MyWidget(tkinter.ttk.Widget):
         self.bind(*args, **kwargs)
         return self
 
+    def rfocus_set(self):
+        self.focus_set()
+        return self
+
 
 class Button(MyWidget, ttk.Button):
     pass
@@ -41,24 +48,41 @@ class Separator(MyWidget, ttk.Separator):
 
 class Combobox(MyWidget, ttk.Combobox):
     @property
-    def values(self): return self['values']
+    def values(self):
+        return self['values']
 
     @values.setter
-    def values(self, values: List[Any]):
+    def values(self, values: Iterable[Any]):
         self['values'] = values
+
+    def clear(self):
+        self.set('')
+        return self
 
 
 class Entry(MyWidget, ttk.Entry):
     @property
-    def value(self): return self.get()
+    def value(self):
+        return self.get()
 
 
 class Label(MyWidget, ttk.Label):
     @property
-    def value(self): return self['text']
+    def value(self):
+        return self['text']
 
     @value.setter
-    def value(self, text): self['text'] = text
+    def value(self, text):
+        self['text'] = text
+
+
+class Menu(ttk.Menu):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.master = master
+
+    def post_event(self, event):
+        self.post(event.x_root, event.y_root)
 
 
 class ScrolledText(MyWidget, ttk.ScrolledText):

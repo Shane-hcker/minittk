@@ -1,4 +1,5 @@
-# -*- encodingss: utf-8 -*-
+# -*- encoding: utf-8 -*-
+from os.path import abspath
 import configparser
 
 
@@ -17,10 +18,15 @@ class MyConfigParser(configparser.ConfigParser):
 
         if self.__class__._init_flag:
             return
+        print('going throught MyConfigParser.__init__()')
         super().__init__()
         self.__class__._init_flag = True
-        self.cfgfile = cfgfile
+        self.cfgfile = abspath(cfgfile)
         self.read(cfgfile, encoding='utf-8') if cfgfile is not None else ...
+
+    def commit(self):
+        self.write(open(self.cfgfile, 'w'))
+        return self
 
     @staticmethod
     def useconfig(cfgfile=None):
@@ -29,6 +35,38 @@ class MyConfigParser(configparser.ConfigParser):
             print(f'{cls} runned useconfig()')
             return cls
         return inner
+
+    def writeAfterSet(self, *args, cnf=None) -> None:
+        """
+        :param cnf: [
+            {
+                "section": section,
+                "option": option,
+                "value": value,
+            },
+            ...
+        ]
+        """
+        if args:
+            self.set(*args)
+            self.commit()
+            return
+
+        if not cnf:
+            raise AttributeError('length of `cnf` needs to be >= 1')
+
+        # cnf=list
+        if (cnf_length := len(cnf)) == 1:
+            section, option, value = cnf[0]
+            self.set(section, option, value)
+            self.commit()
+            return
+
+        for dic in range(cnf_length):
+            section, option, value = cnf[dic]
+            self.set(section, option, value)
+
+        self.commit()
 
     def loadfromFile(self, cfgfile) -> None:
         self.__init__(cfgfile)
@@ -42,6 +80,8 @@ class MyConfigParser(configparser.ConfigParser):
     def getSectionItems(self, section) -> dict | None:
         if self.cfgfile is None:
             return
+
         if not self.has_section(section):
             raise ValueError(f'Section \'{section}\' does not exist')
-        return {i[0]: int(i[1]) if i[0] == 'port' else i[1] for i in self.items(section)}
+
+        return {key: int(value) if key == 'port' else value for key, value in self.items(section)}

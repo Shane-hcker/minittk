@@ -3,10 +3,12 @@ import ttkbootstrap as ttk
 from typing import *
 import pymysql
 import tkinter.filedialog as filedialog
+from ttkbootstrap.localization.msgcat import MessageCatalog
 from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.tooltip import ToolTip
 from pymysql.cursors import Cursor
 from functools import partial
+
 
 from minittk.widgetqueue import *
 from minittk.constants import *

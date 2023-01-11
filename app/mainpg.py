@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
-from user.setting import SettingPage
 from minittk import *
+from dbops.tableops import TableOperationMenu
+from user.setting import SettingPage
 
 
 @UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
@@ -9,36 +10,41 @@ class MainPage(MyWindow):
     def __init__(self):
         print(f'__init__(): {self}, id: {id(self)}')
         self.curr_theme = self.cfgParser.get('App', 'theme')
-        posX, posY = self.cfgParser.getint('App', 'startup.x'), self.cfgParser.getint('App', 'startup.y')
-        super().__init__('Title', '1200x700', (True, True), (posX, posY), self.curr_theme)
-        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
-        self.rightSideFrame = self.add(frame)  # r < 右侧的 Panedwindow
-        # Child of rightFrame
-        self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
-        tree_column = [{'text': 'Name', 'stretch': True}, {'text': 'Value', 'stretch': True},
-                       {'text': 'Password', 'stretch': True}, {'text': 'Last Modified', 'stretch': True}]
-        self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
-                                     searchable=True, stripecolor=(self.style.colors.light, None),
-                                     pagesize=20).rpack(fill=BOTH, expand=True)
+        super().__init__('Title', '1200x700', (True, True), (self.cfgParser.getint('App', 'startup.x'),
+                         self.cfgParser.getint('App', 'startup.y')), self.curr_theme)
+
+        self.isTableLengthOutOfRange: bool = False
         self.current_database = None
         self.databaseCombobox = None
         self.selectionCombobox = None
         self.themeCombobox = None
-        self.isTableLengthOutOfRange: bool = False
 
-    def __call__(self, *args, **kwargs) -> None:
+        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
+        self.rightSideFrame = self.add(frame)  # r < 右侧的 Panedwindow
+
+        self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
+        tree_column = [
+            {'text': 'Name', 'stretch': True},
+            {'text': 'Value', 'stretch': True},
+            {'text': 'Password', 'stretch': True},
+            {'text': 'Last Modified', 'stretch': True}
+        ]
+        self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
+                                     searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
+
+        self.window.bind('<Control-n>', lambda event: print('created file'))
+        self.window.bind('<Control-Shift-N>', lambda event: print('created 2 files'))
+
+    def __call__(self, *args, **kwargs):
         self.mainloop()
         self._connection.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        TableOperationMenu(self.selectionCombobox)
         self.mainloop()
         self._connection.close()
         if exc_type is not None:
             raise exc_type()
-
-    def use(self, db) -> Tuple:
-        self._connection.use(db)
-        return self.show_tables()
 
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
@@ -49,40 +55,37 @@ class MainPage(MyWindow):
     def __databaseComboboxSelected(self, event):
         get_selected = self.databaseCombobox.get()
         self.selectionCombobox.values = [table[0] for table in self.use(get_selected)]
-        self.selectionCombobox.set('')
+        self.selectionCombobox.clear()
 
         self.current_database.value = get_selected
         if self.current_database.value != self.cfgParser.get('MySQL', 'database'):
-            self.cfgParser.set('MySQL', 'database', self.current_database.value)
-            self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
+            self.cfgParser.writeAfterSet('MySQL', 'database', self.current_database.value)
 
-        if not self.tree.get_rows():
-            return
-        self.tree.delete_rows()
+        if self.tree.get_rows():
+            self.tree.delete_rows()
 
     def __selectionComboboxSelected(self, event):
         getval = self.selectionCombobox.get()
         self.tree.delete_rows()
-        # 如果长度>4就从combobox列表中删除该表格
-        if len(self.run_query(f'desc {getval}')) != 4:
-            self.selectionCombobox.set('')
-            tableslist = list(self.selectionCombobox.values)
-            try:
-                tableslist.remove(getval)
-                self.selectionCombobox.values = tableslist
-            except ValueError as e:
-                print(e)
 
-            if self.isTableLengthOutOfRange:
-                return
-
-            self.isTableLengthOutOfRange = True
-            Messagebox.show_error(title='Error', message='该表格行长度>4，无法显示')
+        if len(self.describe(table_name=getval)) == 4:
+            for data in self.select('*', table_name=getval):
+                self.tree.insert_row(values=[data[0], data[1], data[2], data[3]])
+            self.tree.load_table_data()
             return
 
-        for data in self.run_query(f'select * from {getval}'):
-            self.tree.insert_row(values=[data[0], data[1], data[2], data[3]])
-        self.tree.load_table_data()
+        # 如果长度>4就从combobox列表中删除该表格
+        self.selectionCombobox.clear()
+        tableslist = list(self.selectionCombobox.values)
+        try:
+            tableslist.remove(getval)
+            self.selectionCombobox.values = tableslist
+        except ValueError as e:
+            print(e)
+
+        if not self.isTableLengthOutOfRange:
+            self.isTableLengthOutOfRange = True
+            Messagebox.show_error(title='Error', message='该表格行长度>4，无法显示')
 
     def __themeComboboxSelected(self, event):
         self.curr_theme = self.themeCombobox.get()
@@ -90,10 +93,9 @@ class MainPage(MyWindow):
         self.themeCombobox.selection_clear()
 
     def saveThemeChange(self):
-        self.cfgParser.set('App', 'theme', self.curr_theme)
-        self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
+        self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
 
-    def createSidebar(self):
+    def createSidebar(self) -> "MainPage":
         lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10, bootstyle='success').rpack(
                           fill=X, padx=50, pady=50, side=TOP)  # LabelFrame
 
@@ -118,7 +120,7 @@ class MainPage(MyWindow):
         self.panedwin.add(lFrame)
         return self
 
-    def createViewTab(self):
+    def createViewTab(self) -> "MainPage":
         self.add(button, self.rightSideTopFrame, text='用腾讯会议打开', bootstyle='SUCCESS',
                  command=lambda: UIAutomation.openwithTX(self.selectedOptionContent)).pack(padx=10, pady=10, side=LEFT)
         self.add(button, self.rightSideTopFrame, text='用Zoom会议打开', bootstyle='INFO',

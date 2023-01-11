@@ -1,13 +1,11 @@
 # -*- encoding: utf-8 -*-
 import pymysql
-
+from functools import partial
 from minittk.support.cfgparser import MyConfigParser
 
 
 class UserConnection(pymysql.Connection):
-    """User database connection
-    TODO 添加装饰时将该类的方法(需要改写成被添加装饰器的类)全部导入(包括ConfigParser+UserConnection)
-    """
+    """User database connection"""
     _instance = None
     _init_flag = False
 
@@ -22,6 +20,7 @@ class UserConnection(pymysql.Connection):
         """
         if self.__class__._init_flag:
             return
+        print('going through UserConnection.__init__()')
         self.__class__._init_flag = True
         self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
         super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
@@ -36,10 +35,16 @@ class UserConnection(pymysql.Connection):
     def usemysql(cfgfile=None):
         def inner(cls):
             cls._connection = UserConnection(cfgfile=cfgfile)
-            cls.run_query = lambda self, *args, **kwargs: cls._connection.run_query(*args, **kwargs)
-            cls.show_databases = lambda self: cls._connection.show_databases()
-            cls.show_tables = lambda self: cls._connection.show_tables()
-            cls.cursor = property(lambda self: cls._connection.csr)
+            cls.use = partial(cls._connection.use)
+            cls.drop = partial(cls._connection.drop)
+            cls.select = partial(cls._connection.select)
+            cls.tinsert = partial(cls._connection.insert)
+            cls.describe = partial(cls._connection.describe)
+            cls.run_query = partial(cls._connection.run_query)
+            cls.show_tables = partial(cls._connection.show_tables)
+            cls.create_table = partial(cls._connection.create_table)
+            cls.show_databases = partial(cls._connection.show_databases)
+            cls.cursor = property(cls._connection.csr)
             print(f'{cls} runned usemysql()')
             return cls
         return inner
@@ -51,8 +56,22 @@ class UserConnection(pymysql.Connection):
                 return self.csr.fetchall()
             case 'one':
                 return self.csr.fetchone()
+            case 'many':
+                raise AttributeError('does not fucking support many')
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
+
+    def describe(self, table_name):
+        return self.run_query(f'desc {table_name}')
+
+    def drop(self, drop_type=None, *, name):
+        match drop_type:
+            case 'database' | 'db':
+                self.run_query(f'drop database {name}')
+            case 'table':
+                self.run_query(f'drop table {name}')
+            case _:
+                self.run_query(f'drop table {name}')
 
     def create_table(self, table_name):
         self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
@@ -61,16 +80,21 @@ class UserConnection(pymysql.Connection):
         self.run_query(f'insert into {table_name} values{values}')
         return values
 
-    def select(self, *args, table_name=None):
+    def select(self, *args, table_name):
         match args:
             case ('*', ) | ():
                 return self.run_query(f'select * from {table_name}')
             case _:
-                query_string = f'select {str(args)} from {table_name}'.replace('(', '').replace(')', '').replace('\'', '')
+                query_string = f'select {str(args)} from {table_name}'
+                query_string = query_string.replace('(', '').replace(')', '').replace('\'', '').replace('\"', '')
                 return self.run_query(query_string)
+
+    def drop_table(self, table_name):
+        self.run_query(f'drop table {table_name}')
 
     def use(self, db: str) -> None:
         self.run_query(f'use {db}')
+        return self.show_tables()
 
     def show_tables(self):
         return self.run_query('show tables')
