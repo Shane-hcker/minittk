@@ -18,7 +18,7 @@ class MyConfigParser(configparser.ConfigParser):
 
         if self.__class__._init_flag:
             return
-        print('going throught MyConfigParser.__init__()')
+        print('going through MyConfigParser.__init__()')
         super().__init__()
         self.__class__._init_flag = True
         self.cfgfile = abspath(cfgfile)
@@ -36,7 +36,7 @@ class MyConfigParser(configparser.ConfigParser):
             return cls
         return inner
 
-    def writeAfterSet(self, *args, cnf=None) -> None:
+    def writeAfterSet(self, *args, cnf=None):
         """
         :param cnf: [
             {

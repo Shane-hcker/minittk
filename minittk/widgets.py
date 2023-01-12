@@ -79,7 +79,6 @@ class Label(MyWidget, ttk.Label):
 class Menu(ttk.Menu):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        self.master = master
 
     def post_event(self, event):
         self.post(event.x_root, event.y_root)

@@ -25,13 +25,14 @@ class SettingPage(MyWindow):
 
         [i.configure(bootstyle=DEFAULT) for i in self.entryQueue]
         labelVal = self.labelQueue.getLabelValue()
-        t = 0
+        cfg_data = 0
+        # TODO writerAfterset replace with set
         for _ in range(5):
-            self.cfgParser.set('MySQL', labelVal[t], getList[t])
-            t += 1
+            self.cfgParser.set('MySQL', labelVal[cfg_data], getList[cfg_data])
+            cfg_data += 1
         for _ in range(3):
-            self.cfgParser.set('App', labelVal[t], getList[t])
-            t += 1
+            self.cfgParser.set('App', labelVal[cfg_data], getList[cfg_data])
+            cfg_data += 1
         self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
         Messagebox.show_info(title='Success', message='保存成功, 部分配置需要重启生效', parent=self.window)
 

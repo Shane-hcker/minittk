@@ -4,7 +4,8 @@ from dbops.tableops import TableOperationMenu
 from user.setting import SettingPage
 
 
-@UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
+# D:\minittk\app\user\config.ini
+@UserConnection.usemysql()
 @MyConfigParser.useconfig()
 class MainPage(MyWindow):
     def __init__(self):
@@ -31,8 +32,7 @@ class MainPage(MyWindow):
         ]
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
-
-        self.window.bind('<Control-n>', lambda event: print('created file'))
+        # TODO database rcm(右键菜单)
         self.window.bind('<Control-Shift-N>', lambda event: print('created 2 files'))
 
     def __call__(self, *args, **kwargs):
@@ -40,10 +40,10 @@ class MainPage(MyWindow):
         self._connection.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        TableOperationMenu(self.selectionCombobox)
+        TableOperationMenu(self)
         self.mainloop()
         self._connection.close()
-        if exc_type is not None:
+        if exc_type:
             raise exc_type()
 
     @property
@@ -77,6 +77,7 @@ class MainPage(MyWindow):
         # 如果长度>4就从combobox列表中删除该表格
         self.selectionCombobox.clear()
         tableslist = list(self.selectionCombobox.values)
+
         try:
             tableslist.remove(getval)
             self.selectionCombobox.values = tableslist
