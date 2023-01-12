@@ -31,8 +31,7 @@ class MainPage(MyWindow):
         ]
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
-
-        self.window.bind('<Control-n>', lambda event: print('created file'))
+        # TODO database rcm(右键菜单)
         self.window.bind('<Control-Shift-N>', lambda event: print('created 2 files'))
 
     def __call__(self, *args, **kwargs):
@@ -40,7 +39,7 @@ class MainPage(MyWindow):
         self._connection.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        TableOperationMenu(self.selectionCombobox)
+        TableOperationMenu(self)
         self.mainloop()
         self._connection.close()
         if exc_type is not None:

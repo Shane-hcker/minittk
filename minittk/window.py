@@ -61,7 +61,7 @@ class MyWindow:
         return self.__class__.windowType
 
     @property
-    def window(self) -> ttk.Window | ttk.Toplevel:
+    def window(self) -> Union[ttk.Window, ttk.Toplevel]:
         return self._window
 
     @property

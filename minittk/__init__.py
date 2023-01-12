@@ -4,7 +4,7 @@ from typing import *
 import pymysql
 import tkinter.filedialog as filedialog
 from ttkbootstrap.localization.msgcat import MessageCatalog
-from ttkbootstrap.dialogs.dialogs import Messagebox
+from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
 from ttkbootstrap.tooltip import ToolTip
 from pymysql.cursors import Cursor
 from functools import partial
