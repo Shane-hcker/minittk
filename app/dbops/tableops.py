@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 import csv
+from types import NoneType
 from minittk import *
 
 
@@ -24,7 +25,8 @@ class TableOperationMenu(Menu):
         self.build_rightClickMenu()
         self.master.bind('<Button-3>', self.post_event)
         # fixme missing positional argument 'event'
-        self.cls.window.bind('<Control-n>', lambda self, event: self.__create_table())
+        self.cls.window.bind('<Control-n>', self.__create_table)
+        self.cls.window.bind('<Control-i>', self.import_from_csv)
 
     # building right click menu
     def build_rightClickMenu(self):
@@ -54,21 +56,9 @@ class TableOperationMenu(Menu):
 
     @staticmethod
     def __isTitleValid(string: str):
-        if not string or string.isdigit() or not string.isascii():
-            raise ValueError('表名仅支持: ASCII字母(+数字)(+符号)')
-
-    # All commands below
-    def import_from_csv(self):
-        filename = filedialog.askopenfilename(filetypes=[('CSV', 'csv')], parent=self.window, title='通过csv导入')
-        removedext = filename.rstrip('.csv').rstrip('.CSV')
-        self.__isTitleValid(tableName := removedext.split('/')[-1])
-
-        # todo 表格数据不能为空
-        with open(filename, newline='', encoding='utf-8') as f:
-            csv_lines = csv.reader(f)
-            self.create_table(tableName)
-            for line in csv_lines:
-                self.tinsert(tableName, line[0], line[1], line[2])
+        if not string:
+            return None
+        return False if (len(string) < 2 or string.isdigit() or not string.isascii()) else True
 
     def drop_table(self) -> None:
         if not self.master.get():
@@ -85,7 +75,28 @@ class TableOperationMenu(Menu):
         current = original.remove(drop_table_name)
         self.master.values = current
 
-    def __create_table(self):
-        self.__isTitleValid(string := Querybox.get_string(prompt='输入表格名称', title='Title'))
+    def __create_table(self, event=None):
+        if isinstance(string := Querybox.get_string(prompt='输入表格名称', title='Title'), NoneType):
+            return
+
+        if not self.__isTitleValid(string):
+            raise ValueError('请检查表名')
+
         self.create_table(string)
         print(f'created table \'{string}\'')
+
+    def import_from_csv(self, event=None):
+        if not (filename := filedialog.askopenfilename(parent=self.cls.window, title='通过csv导入',
+                filetypes=[('CSV', 'csv')])):
+            return
+
+        removed_ext = filename.rstrip('.csv').rstrip('.CSV')
+
+        if not self.__isTitleValid(table_name := removed_ext.split('/')[-1]):
+            raise ValueError('请检查表名')
+
+        # todo 表格数据不能为空 如果为空则创建一个空表格(无需循环遍历
+        with open(filename, newline='', encoding='utf-8') as f:
+            csv_lines = csv.reader(f)
+            self.create_table(table_name)
+            [self.tinsert(table_name, line[0], line[1], line[2]) for line in csv_lines]
