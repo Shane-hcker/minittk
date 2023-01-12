@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 import csv
+from tkinter import TclError
 from types import NoneType
 from minittk import *
 
@@ -18,8 +19,7 @@ class TableOperationMenu(Menu):
     """
     def __init__(self, cls):
         self.cls = cls
-        selectionCombobox: Combobox = self.cls.selectionCombobox
-        super().__init__(selectionCombobox)
+        super().__init__(selectionCombobox := self.cls.selectionCombobox)
         self.master: Combobox = selectionCombobox
         # build + bind right click menu
         self.build_rightClickMenu()
@@ -27,6 +27,18 @@ class TableOperationMenu(Menu):
         # fixme missing positional argument 'event'
         self.cls.window.bind('<Control-n>', self.__create_table)
         self.cls.window.bind('<Control-i>', self.import_from_csv)
+
+    # 触发条件时检查combobox是否为空
+    def post_event(self, event):
+        if self.master.get():
+            # fixme 菜单栏执行多次add_cmd
+            self.add_command(label='重命名')
+        else:
+            try:
+                self.delete('重命名')
+            except TclError:
+                pass
+        self.post(event.x_root, event.y_root)
 
     # building right click menu
     def build_rightClickMenu(self):

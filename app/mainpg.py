@@ -4,7 +4,8 @@ from dbops.tableops import TableOperationMenu
 from user.setting import SettingPage
 
 
-@UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
+# D:\minittk\app\user\config.ini
+@UserConnection.usemysql()
 @MyConfigParser.useconfig()
 class MainPage(MyWindow):
     def __init__(self):
@@ -42,7 +43,7 @@ class MainPage(MyWindow):
         TableOperationMenu(self)
         self.mainloop()
         self._connection.close()
-        if exc_type is not None:
+        if exc_type:
             raise exc_type()
 
     @property
@@ -76,6 +77,7 @@ class MainPage(MyWindow):
         # 如果长度>4就从combobox列表中删除该表格
         self.selectionCombobox.clear()
         tableslist = list(self.selectionCombobox.values)
+
         try:
             tableslist.remove(getval)
             self.selectionCombobox.values = tableslist
