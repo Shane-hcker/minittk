@@ -25,26 +25,26 @@ class UserConnection(pymysql.Connection):
         self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
         super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
-        self.tableDescription = [f"create table if not exists ",
-                                 " (`Name` char(255) not null primary key default '', "
+        self.tableDescription = ["create table if not exists ",
+                                 "(`Name` char(255) not null primary key default '', "
                                  "`Value` bigint(255) not null, "
                                  "`Password` bigint(255) null, "
-                                 "`Last Modified` date null default CURDATE())"]
+                                 "`Last Modified` date not null)"]
 
     @staticmethod
     def usemysql(cfgfile=None):
         def inner(cls):
             cls._connection = UserConnection(cfgfile=cfgfile)
-            cls.use = partial(cls._connection.use)
+            cls.cursor = property(cls._connection.csr)
+            cls.run_query = partial(cls._connection.run_query)
             cls.drop = partial(cls._connection.drop)
+            cls.show_databases = partial(cls._connection.show_databases)
+            cls.use = partial(cls._connection.use)
+            cls.show_tables = partial(cls._connection.show_tables)
+            cls.describe = partial(cls._connection.describe)
+            cls.create_table = partial(cls._connection.create_table)
             cls.select = partial(cls._connection.select)
             cls.tinsert = partial(cls._connection.insert)
-            cls.describe = partial(cls._connection.describe)
-            cls.run_query = partial(cls._connection.run_query)
-            cls.show_tables = partial(cls._connection.show_tables)
-            cls.create_table = partial(cls._connection.create_table)
-            cls.show_databases = partial(cls._connection.show_databases)
-            cls.cursor = property(cls._connection.csr)
             print(f'{cls} runned usemysql()')
             return cls
         return inner
@@ -68,7 +68,7 @@ class UserConnection(pymysql.Connection):
         match drop_type:
             case 'database' | 'db':
                 self.run_query(f'drop database {name}')
-            case 'table':
+            case 'table' | None:
                 self.run_query(f'drop table {name}')
             case _:
                 self.run_query(f'drop table {name}')
@@ -77,8 +77,14 @@ class UserConnection(pymysql.Connection):
         self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
 
     def insert(self, table_name, *values):
-        self.run_query(f'insert into {table_name} values{values}')
-        return values
+        if not str(values[1]).isdigit():
+            return
+
+        self.run_query(
+            f"insert into {table_name} values('{values[0]}', {values[1]}, "
+            f"{'NULL' if not values[2] else values[2]}, "
+            f"{values[3] if len(values) == 4 else 'CURDATE()'})"
+        )
 
     def select(self, *args, table_name):
         match args:

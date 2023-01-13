@@ -21,26 +21,37 @@ class TableOperationMenu(Menu):
         self.cls = cls
         super().__init__(selectionCombobox := self.cls.selectionCombobox)
         self.master: Combobox = selectionCombobox
+        self.isRenameCommandAdded = False
         # build + bind right click menu
         self.build_rightClickMenu()
         self.master.bind('<Button-3>', self.post_event)
-        # fixme missing positional argument 'event'
+
         self.cls.window.bind('<Control-n>', self.__create_table)
         self.cls.window.bind('<Control-i>', self.import_from_csv)
+        self.cls.window.bind('<Control-m>', self.modifySelectedSlot)
+        self.cls.add(button, self.cls.rightSideTopFrame, text='修改当前选中条目', bootstyle=DANGER,
+                     command=self.modifySelectedSlot).pack(pady=10, side=RIGHT)
 
-    # 触发条件时检查combobox是否为空
-    def post_event(self, event):
+    def modifySelectedSlot(self, event=None):
+        table = self.cls.tree
+        print(table.get_selected_row())
+        return
+
+    def post_event(self, event=None):
         if self.master.get():
-            # fixme 菜单栏执行多次add_cmd
+            if self.isRenameCommandAdded:
+                super().post_event(event)
+                return
             self.add_command(label='重命名')
+            self.isRenameCommandAdded = True
         else:
             try:
                 self.delete('重命名')
+                self.isRenameCommandAdded = False
             except TclError:
                 pass
-        self.post(event.x_root, event.y_root)
+        super().post_event(event)
 
-    # building right click menu
     def build_rightClickMenu(self):
         config = {
             'export_table': {

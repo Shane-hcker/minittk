@@ -57,7 +57,12 @@ class Combobox(MyWidget, ttk.Combobox):
 
     def clear(self):
         self.set('')
-        return self
+
+    def dbind(self, *args, **kwargs):
+        self.bind("<<ComboboxSelected>>", *args, **kwargs)
+
+    def rbind(self, *args, **kwargs):
+        super().rbind('<<ComboboxSelected>>', *args, **kwargs)
 
 
 class Entry(MyWidget, ttk.Entry):
@@ -121,4 +126,5 @@ class Notebook(MyWidget, ttk.Notebook):
 
 
 class Tableview(MyWidget, ttkTableView):
-    pass
+    def get_selected_row(self):
+        return self.view.set(self.view.focus())

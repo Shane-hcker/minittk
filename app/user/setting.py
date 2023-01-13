@@ -24,16 +24,18 @@ class SettingPage(MyWindow):
             return
 
         [i.configure(bootstyle=DEFAULT) for i in self.entryQueue]
+
         labelVal = self.labelQueue.getLabelValue()
         cfg_data = 0
-        # TODO writerAfterset replace with set
+
         for _ in range(5):
-            self.cfgParser.set('MySQL', labelVal[cfg_data], getList[cfg_data])
+            self.cfgParser.writeAfterSet('MySQL', labelVal[cfg_data], getList[cfg_data], autocommit=False)
             cfg_data += 1
         for _ in range(3):
-            self.cfgParser.set('App', labelVal[cfg_data], getList[cfg_data])
+            self.cfgParser.writeAfterSet('App', labelVal[cfg_data], getList[cfg_data], autocommit=False)
             cfg_data += 1
-        self.cfgParser.write(open(self.cfgParser.cfgfile, 'w'))
+
+        self.cfgParser.commit()
         Messagebox.show_info(title='Success', message='保存成功, 部分配置需要重启生效', parent=self.window)
 
     def grid(self, parent, dic: dict):
@@ -41,9 +43,11 @@ class SettingPage(MyWindow):
         for k, v in dic.items():
             label_ = self.add(label, parent, text=k).rgrid(column=0, row=row, pady=2, padx=45)
             self.labelQueue.enqueue(label_)
+
             input_ = self.add(entry, parent).rgrid(column=1, row=row, pady=2, padx=5)
             input_.insert(END, v)
             self.entryQueue.enqueue(input_)
+
             row += 1
 
     def mysql_config(self) -> "SettingPage":

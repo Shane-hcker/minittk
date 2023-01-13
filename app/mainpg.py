@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 from minittk import *
-from dbops.tableops import TableOperationMenu
+from operations.tableops import TableOperationMenu
 from user.setting import SettingPage
 
 
@@ -49,7 +49,7 @@ class MainPage(MyWindow):
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
         # focus() & selection()
-        value = self.tree.view.set(self.tree.view.focus())
+        value = self.tree.get_selected_row()
         return None if not value else (value['1'], value['2'])  # set()获取当前row的值
 
     def __databaseComboboxSelected(self, event):
@@ -111,12 +111,12 @@ class MainPage(MyWindow):
         self.databaseCombobox = self.add(combobox, lFrame, width=25).rgrid(column=0, row=2, columnspan=3, pady=5)
         forbid_db_list = ['information_schema', 'performance_schema', 'mysql']
         self.databaseCombobox.values = [db[0] for db in self.show_databases() if db[0] not in forbid_db_list]
-        self.databaseCombobox.bind('<<ComboboxSelected>>', self.__databaseComboboxSelected)
+        self.databaseCombobox.dbind(self.__databaseComboboxSelected)
 
         self.add(label, lFrame, text='选择表格: ').grid(column=0, row=3)
         self.selectionCombobox = self.add(combobox, lFrame, width=25).rgrid(column=0, row=4, columnspan=3, pady=5)
         self.selectionCombobox.values = [table[0] for table in self.show_tables()]
-        self.selectionCombobox.bind('<<ComboboxSelected>>', self.__selectionComboboxSelected)
+        self.selectionCombobox.dbind(self.__selectionComboboxSelected)
 
         self.panedwin.add(lFrame)
         return self
@@ -128,13 +128,15 @@ class MainPage(MyWindow):
                  command=lambda: UIAutomation.openwithZoom(self.selectedOptionContent)).pack(pady=10, side=LEFT)
 
         self.add(button, self.rightSideTopFrame, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
+
         self.add(label, self.rightSideFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
                  padx=10, pady=10, side=LEFT)
 
         self.themeCombobox = self.add(combobox, self.rightSideFrame, width=10, values=self.style.theme_names()).rpack(
-                                      pady=10, side=LEFT).rbind('<<ComboboxSelected>>', self.__themeComboboxSelected)
+                                      pady=10, side=LEFT).rbind(self.__themeComboboxSelected)
 
-        theme_save = self.add(button, self.rightSideFrame, text='保存主题', command=self.saveThemeChange, bootstyle=LIGHT)
+        theme_save = self.add(button, self.rightSideFrame, text='保存主题',
+                              command=self.saveThemeChange, bootstyle=LIGHT)
         theme_save.pack(padx=10, pady=10, side=LEFT)
         ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-reverse')
 
@@ -143,5 +145,6 @@ class MainPage(MyWindow):
 
 
 if __name__ == '__main__':
+    from ttkbootstrap.icons import Icon
     with MainPage() as window:
         window.createSidebar().createViewTab()
