@@ -1,10 +1,10 @@
 # -*- encoding: utf-8 -*-
-import pymysql
 from functools import partial
 from minittk.support.cfgparser import MyConfigParser
+from minittk.support.baseconn import BaseConnection
 
 
-class UserConnection(pymysql.Connection):
+class UserConnection(BaseConnection):
     """User database connection"""
     _instance = None
     _init_flag = False
@@ -25,16 +25,67 @@ class UserConnection(pymysql.Connection):
         self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
         super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
-        self.tableDescription = ["create table if not exists ",
-                                 "(`Name` char(255) not null primary key default '', "
-                                 "`Value` bigint(255) not null, "
-                                 "`Password` bigint(255) null, "
-                                 "`Last Modified` date not null)"]
+        self.tableDescription = [
+            "create table if not exists ",
+            "(`Name` char(255) not null primary key default '',"
+            "`Value` bigint(255) not null,"
+            "`Password` bigint(255) null,"
+            "`Last Modified` date not null)"
+        ]
+
+    def insert(self, table_name, *values):
+        """
+        with Password: table_name, name, value, password
+        without Pasword: table_name, name, value, ''
+        """
+        name, value, password = values[:3]
+        if str(name).isdigit() or not str(value).isdigit():
+            return
+
+        self.run_query(
+            f"insert into {table_name} values('{name}', {value}, "
+            f"{'NULL' if not password else password}, CURDATE())"
+        )
+
+    def select(self, *args, table_name):
+        match args:
+            case ('*', ) | ():
+                return self.run_query(f'select * from {table_name}')
+            case _:
+                query_string = f'select {str(args)} from {table_name}'
+                query_string = query_string.replace('(', '').replace(')', '').replace('\'', '`')
+                return self.run_query(query_string)
+
+    def drop(self, drop_type, name):
+        match drop_type:
+            case 'database' | 'db':
+                self.run_query(f'drop database {name}')
+            case 'table' | None:
+                self.run_query(f'drop table {name}')
+            case _:
+                raise AttributeError(f'Unknown drop object {drop_type}')
+
+    def run_query(self, query, fetch=None):
+        self.csr.execute(query)
+        match fetch:
+            case None | 'all':
+                return self.csr.fetchall()
+            case 'one':
+                return self.csr.fetchone()
+            case 'many':
+                raise AttributeError('does not fucking support many')
+            case _:
+                raise AttributeError(f'unknown value {fetch} for argument fetch')
+
+    def use(self, db: str) -> None:
+        self.run_query(f'use {db}')
+        return self.show_tables()
 
     @staticmethod
     def usemysql(cfgfile=None):
         def inner(cls):
             cls._connection = UserConnection(cfgfile=cfgfile)
+            cls.tupdate = partial(cls._connection.update)
             cls.cursor = property(cls._connection.csr)
             cls.run_query = partial(cls._connection.run_query)
             cls.drop = partial(cls._connection.drop)
@@ -49,61 +100,28 @@ class UserConnection(pymysql.Connection):
             return cls
         return inner
 
-    def run_query(self, query, fetch=None):
-        self.csr.execute(query)
-        match fetch:
-            case None | 'all':
-                return self.csr.fetchall()
-            case 'one':
-                return self.csr.fetchone()
-            case 'many':
-                raise AttributeError('does not fucking support many')
-            case _:
-                raise AttributeError(f'unknown value {fetch} for argument fetch')
+    @staticmethod
+    def __format_kv_items(string: dict):
+        thestring = ""
+        for key, value in string.items():
+            if (value.isalpha() or value.isalnum()) and value not in ('NULL', 'null'):
+                thestring += f"`{key}`='{value}',"
+                continue
+            thestring += f"`{key}`={value},"
+        return thestring.strip(',')
 
-    def describe(self, table_name):
-        return self.run_query(f'desc {table_name}')
-
-    def drop(self, drop_type=None, *, name):
-        match drop_type:
-            case 'database' | 'db':
-                self.run_query(f'drop database {name}')
-            case 'table' | None:
-                self.run_query(f'drop table {name}')
-            case _:
-                self.run_query(f'drop table {name}')
+    def update(self, table_name, setvalues: dict, condition: dict) -> None:
+        set_string = self.__format_kv_items(setvalues)
+        condition_string = self.__format_kv_items(condition)
+        print(f"update {table_name} set {set_string} where {condition_string}")
 
     def create_table(self, table_name):
         self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
 
-    def insert(self, table_name, *values):
-        if not str(values[1]).isdigit():
-            return
+    def describe(self, table_name): return self.run_query(f'desc {table_name}')
 
-        self.run_query(
-            f"insert into {table_name} values('{values[0]}', {values[1]}, "
-            f"{'NULL' if not values[2] else values[2]}, "
-            f"{values[3] if len(values) == 4 else 'CURDATE()'})"
-        )
+    def drop_table(self, table_name): self.drop('table', table_name)
 
-    def select(self, *args, table_name):
-        match args:
-            case ('*', ) | ():
-                return self.run_query(f'select * from {table_name}')
-            case _:
-                query_string = f'select {str(args)} from {table_name}'
-                query_string = query_string.replace('(', '').replace(')', '').replace('\'', '').replace('\"', '')
-                return self.run_query(query_string)
+    def show_tables(self): return self.run_query('show tables')
 
-    def drop_table(self, table_name):
-        self.run_query(f'drop table {table_name}')
-
-    def use(self, db: str) -> None:
-        self.run_query(f'use {db}')
-        return self.show_tables()
-
-    def show_tables(self):
-        return self.run_query('show tables')
-
-    def show_databases(self):
-        return self.run_query('show databases')
+    def show_databases(self): return self.run_query('show databases')

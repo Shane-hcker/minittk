@@ -47,6 +47,17 @@ class Separator(MyWidget, ttk.Separator):
 
 
 class Combobox(MyWidget, ttk.Combobox):
+    def remove(self, target_value) -> None:
+        if not self.values:
+            raise IndexError("Empty combobox list")
+
+        original = list(self.values)
+        try:
+            original.remove(target_value)
+            self.values = original
+        except IndexError:
+            raise IndexError(f'{target_value} does not exist in current combobox list')
+
     @property
     def values(self):
         return self['values']
@@ -89,6 +100,30 @@ class Menu(ttk.Menu):
         self.post(event.x_root, event.y_root)
 
 
+class Tableview(MyWidget, ttkTableView):
+    def forInsert(self, iterable, length):
+        """
+        :param iterable: [[...], ...]
+        :param length: length of iterable[index]
+        """
+        inserted_value = '['
+        for _ in range(length):
+            inserted_value += f'item[{_}], '
+        inserted_value.strip(', ')
+        inserted_value += ']'
+
+        for item in iterable:
+            self.insert_row(values=eval(inserted_value))
+
+    def get_selected_row(self):
+        # focus() & selection() => iid
+        print(self.view.focus())
+        return self.view.set(self.view.focus())
+
+    def get_selected_row_iid(self):
+        return self.view.focus()
+
+
 class ScrolledText(MyWidget, ttk.ScrolledText):
     pass
 
@@ -123,8 +158,3 @@ class Labelframe(MyWidget, ttk.Labelframe):
 
 class Notebook(MyWidget, ttk.Notebook):
     pass
-
-
-class Tableview(MyWidget, ttkTableView):
-    def get_selected_row(self):
-        return self.view.set(self.view.focus())
