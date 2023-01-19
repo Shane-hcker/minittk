@@ -48,9 +48,9 @@ class MainPage(MyWindow):
             column += 1
 
         self.database_label = self.add(text=self.cfgParser.get('MySQL', 'database'),
-                                         wtype=label, parent=lFrame,).rgrid(column=0, row=1, columnspan=3)
+                                       wtype=label, parent=lFrame,).rgrid(column=0, row=1, columnspan=3)
         self.databaseCombobox = self.add(combobox, lFrame, width=25).rgrid(column=0, row=2, columnspan=3, pady=5)
-        self.databaseCombobox.values = [db[0] for db in self.show_databases() if db[0] not in self.forbid_db_list]
+        self.databaseCombobox.values = self.show_filtered_databases(restriction=self.forbid_db_list)
         self.databaseCombobox.dbind(self.__databaseComboboxSelected)
 
         self.add(label, lFrame, text='选择表格: ').grid(column=0, row=3)
@@ -73,7 +73,7 @@ class MainPage(MyWindow):
                  padx=10, pady=10, side=LEFT)
 
         self.themeCombobox = self.add(combobox, self.rightSideFrame, width=10, values=self.style.theme_names()).rpack(
-                                      pady=10, side=LEFT).rbind(self.__themeComboboxSelected)
+                                      pady=10, side=LEFT).dbind(self.__themeComboboxSelected)
 
         theme_save = self.add(button, self.rightSideFrame, text='保存主题',
                               command=self.saveThemeChange, bootstyle=LIGHT)

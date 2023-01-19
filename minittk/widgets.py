@@ -47,36 +47,45 @@ class Separator(MyWidget, ttk.Separator):
 
 
 class Combobox(MyWidget, ttk.Combobox):
-    def remove(self, target_value) -> None:
+    def add(self, item):
+        original = list(self.values)
+        original.append(item)
+        original.sort()
+        self.values = original
+
+    def remove(self, item):
         if not self.values:
             raise IndexError("Empty combobox list")
 
         original = list(self.values)
         try:
-            original.remove(target_value)
+            original.remove(item)
             self.values = original
         except IndexError:
-            raise IndexError(f'{target_value} does not exist in current combobox list')
+            raise IndexError(f'{item} does not exist in current combobox list')
+
+    def reset(self, old, new):
+        original = list(self.values)
+        original[original.index(old)] = new
+        self.values = original
 
     @property
-    def values(self):
-        return self['values']
+    def values(self): return self['values']
 
     @values.setter
-    def values(self, values: Iterable[Any]):
-        self['values'] = values
+    def values(self, values: Iterable[Any]): self['values'] = values
 
-    def clear(self):
-        self.set('')
+    def clear(self): self.set('')
 
-    def dbind(self, *args, **kwargs):
-        self.bind("<<ComboboxSelected>>", *args, **kwargs)
-
-    def rbind(self, *args, **kwargs):
-        super().rbind('<<ComboboxSelected>>', *args, **kwargs)
+    def dbind(self, *args, **kwargs): self.rbind("<<ComboboxSelected>>", *args, **kwargs)
 
 
 class Entry(MyWidget, ttk.Entry):
+    def reset(self, value):
+        """clear the entry and insert a value"""
+        self.delete(0, 'end')
+        self.insert('end', value)
+
     @property
     def value(self):
         return self.get()
@@ -106,19 +115,12 @@ class Tableview(MyWidget, ttkTableView):
         :param iterable: [[...], ...]
         :param length: length of iterable[index]
         """
-        inserted_value = '['
-        for _ in range(length):
-            inserted_value += f'item[{_}], '
-        inserted_value.strip(', ')
-        inserted_value += ']'
-
         for item in iterable:
-            self.insert_row(values=eval(inserted_value))
+            self.insert_row(values=[item[ndx] for ndx in range(length)])
 
     def get_selected_row(self):
         # focus() & selection() => iid
-        print(self.view.focus())
-        return self.view.set(self.view.focus())
+        return self.view.set(self.get_selected_row_iid())
 
     def get_selected_row_iid(self):
         return self.view.focus()

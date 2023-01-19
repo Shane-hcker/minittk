@@ -86,6 +86,7 @@ class UserConnection(BaseConnection):
         def inner(cls):
             cls._connection = UserConnection(cfgfile=cfgfile)
             cls.tupdate = partial(cls._connection.update)
+            cls.show_filtered_databases = partial(cls._connection.show_filtered_databases)
             cls.cursor = property(cls._connection.csr)
             cls.run_query = partial(cls._connection.run_query)
             cls.drop = partial(cls._connection.drop)
@@ -125,3 +126,9 @@ class UserConnection(BaseConnection):
     def show_tables(self): return self.run_query('show tables')
 
     def show_databases(self): return self.run_query('show databases')
+
+    def show_filtered_databases(self, restriction=None) -> list:
+        """returns a list of filtered"""
+        if restriction:
+            return [db[0] for db in self.show_databases() if db[0] not in restriction]
+        return [db[0] for db in self.show_databases()]
