@@ -69,6 +69,8 @@ class MyWindow:
         return self._style
 
     def theme_use(self, themename) -> ttk.Style:
+        if themename not in self.style.theme_names():
+            return self.style
         self.style.theme_use(themename)
         return self.style
 

@@ -24,10 +24,6 @@ class MyConfigParser(configparser.ConfigParser):
         self.cfgfile = abspath(cfgfile)
         self.read(cfgfile, encoding='utf-8') if cfgfile is not None else ...
 
-    def commit(self):
-        self.write(open(self.cfgfile, 'w'))
-        return self
-
     @staticmethod
     def useconfig(cfgfile=None):
         def inner(cls):
@@ -36,8 +32,16 @@ class MyConfigParser(configparser.ConfigParser):
             return cls
         return inner
 
-    def writeAfterSet(self, *args, cnf=None):
+    def commit(self) -> None: self.write(open(self.cfgfile, 'w'))
+
+    def _set(self, section, option, value, autocommit):
+        self.set(section, option, value)
+        if autocommit:
+            self.commit()
+
+    def writeAfterSet(self, *args, cnf=None, autocommit=True):
         """
+        :param autocommit automatically commit after set()
         :param cnf: [
             {
                 "section": section,
@@ -48,8 +52,7 @@ class MyConfigParser(configparser.ConfigParser):
         ]
         """
         if args:
-            self.set(*args)
-            self.commit()
+            self._set(*args, autocommit=autocommit)
             return
 
         if not cnf:
@@ -58,15 +61,14 @@ class MyConfigParser(configparser.ConfigParser):
         # cnf=list
         if (cnf_length := len(cnf)) == 1:
             section, option, value = cnf[0]
-            self.set(section, option, value)
-            self.commit()
+            self._set(section, option, value, autocommit)
             return
 
         for dic in range(cnf_length):
             section, option, value = cnf[dic]
-            self.set(section, option, value)
-
-        self.commit()
+            self._set(section, option, value)
+        if autocommit:
+            self.commit()
 
     def loadfromFile(self, cfgfile) -> None:
         self.__init__(cfgfile)

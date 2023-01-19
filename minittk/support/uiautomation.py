@@ -30,8 +30,7 @@ class UIAutomation:
     @staticmethod
     def openwithTX(login_content: Tuple[str, int]):
         if not login_content:
-            Messagebox.show_error(message='你未选择任何数据', title='错误')
-            return
+            return Messagebox.show_error(message='你未选择任何数据', title='错误')
 
         def openLangTX(app_lang=None):
             print(f'switched to {app_lang} mode')
@@ -46,25 +45,27 @@ class UIAutomation:
             pyautogui.typewrite(password)
             pyautogui.press('enter')
             print(f'{app_lang} version ran')
-            return
 
         startfile(MyConfigParser().get('Launch', 'tencentmeeting'))
         try:
             join = UIAutomation.__waitForLocate('./meetingapps/tx/join.png')
             pyautogui.leftClick(join)
             down = UIAutomation.__waitForLocate('./meetingapps/tx/down.png')
+
             pyautogui.leftClick(down)
             sleep(1)
             pyautogui.leftClick(down)
+
             pyautogui.hotkey('ctrl', 'a')  # ensure that no code history remained
             pyautogui.press('backspace')
             print('pending to decide language options...')
+
             if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_ch.png') is not None:
-                openLangTX('ch')
-                return
+                return openLangTX('ch')
+
             if pyautogui.locateCenterOnScreen('./meetingapps/tx/disabled_en.png') is not None:
-                openLangTX('en')
-                return
+                return openLangTX('en')
+
             raise LookupError
         except LookupError as e:
             print(f'{e}: failed to locate. Error.')
@@ -72,8 +73,7 @@ class UIAutomation:
     @staticmethod
     def openwithZoom(login_content: Tuple[str, int]):
         if not login_content:
-            Messagebox.show_error(message='你未选择任何数据', title='错误')
-            return
+            return Messagebox.show_error(message='你未选择任何数据', title='错误')
 
         meetingid, password = login_content
         startfile(MyConfigParser().get('Launch', 'zoom'))

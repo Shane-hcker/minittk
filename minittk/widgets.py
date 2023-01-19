@@ -47,20 +47,45 @@ class Separator(MyWidget, ttk.Separator):
 
 
 class Combobox(MyWidget, ttk.Combobox):
+    def add(self, item):
+        original = list(self.values)
+        original.append(item)
+        original.sort()
+        self.values = original
+
+    def remove(self, item):
+        if not self.values:
+            raise IndexError("Empty combobox list")
+
+        original = list(self.values)
+        try:
+            original.remove(item)
+            self.values = original
+        except IndexError:
+            raise IndexError(f'{item} does not exist in current combobox list')
+
+    def reset(self, old, new):
+        original = list(self.values)
+        original[original.index(old)] = new
+        self.values = original
+
     @property
-    def values(self):
-        return self['values']
+    def values(self): return self['values']
 
     @values.setter
-    def values(self, values: Iterable[Any]):
-        self['values'] = values
+    def values(self, values: Iterable[Any]): self['values'] = values
 
-    def clear(self):
-        self.set('')
-        return self
+    def clear(self): self.set('')
+
+    def dbind(self, *args, **kwargs): self.rbind("<<ComboboxSelected>>", *args, **kwargs)
 
 
 class Entry(MyWidget, ttk.Entry):
+    def reset(self, value):
+        """clear the entry and insert a value"""
+        self.delete(0, 'end')
+        self.insert('end', value)
+
     @property
     def value(self):
         return self.get()
@@ -82,6 +107,23 @@ class Menu(ttk.Menu):
 
     def post_event(self, event):
         self.post(event.x_root, event.y_root)
+
+
+class Tableview(MyWidget, ttkTableView):
+    def forInsert(self, iterable, length):
+        """
+        :param iterable: [[...], ...]
+        :param length: length of iterable[index]
+        """
+        for item in iterable:
+            self.insert_row(values=[item[ndx] for ndx in range(length)])
+
+    def get_selected_row(self):
+        # focus() & selection() => iid
+        return self.view.set(self.get_selected_row_iid())
+
+    def get_selected_row_iid(self):
+        return self.view.focus()
 
 
 class ScrolledText(MyWidget, ttk.ScrolledText):
@@ -117,8 +159,4 @@ class Labelframe(MyWidget, ttk.Labelframe):
 
 
 class Notebook(MyWidget, ttk.Notebook):
-    pass
-
-
-class Tableview(MyWidget, ttkTableView):
     pass
