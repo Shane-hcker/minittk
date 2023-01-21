@@ -33,28 +33,13 @@ class UserConnection(BaseConnection):
             "`Last Modified` date not null)"
         ]
 
-    def insert(self, table_name, *values):
-        """
-        with Password: table_name, name, value, password
-        without Pasword: table_name, name, value, ''
-        """
-        name, value, password = values[:3]
-        if str(name).isdigit() or not str(value).isdigit():
-            return
+    def create_database(self, db) -> None: self.run_query(f'create database {db}')
 
-        self.run_query(
-            f"insert into {table_name} values('{name}', {value}, "
-            f"{'NULL' if not password else password}, CURDATE())"
-        )
+    def create_table(self, table_name) -> None:
+        create_query = self.tableDescription[0]+table_name+self.tableDescription[1]
+        self.run_query(create_query)
 
-    def select(self, *args, table_name):
-        match args:
-            case ('*', ) | ():
-                return self.run_query(f'select * from {table_name}')
-            case _:
-                query_string = f'select {str(args)} from {table_name}'
-                query_string = query_string.replace('(', '').replace(')', '').replace('\'', '`')
-                return self.run_query(query_string)
+    def describe(self, table_name): return self.run_query(f'desc {table_name}')
 
     def drop(self, drop_type, name):
         match drop_type:
@@ -64,6 +49,30 @@ class UserConnection(BaseConnection):
                 self.run_query(f'drop table {name}')
             case _:
                 raise AttributeError(f'Unknown drop object {drop_type}')
+
+    def drop_database(self, db) -> None: self.drop('db', db)
+
+    def drop_table(self, table_name) -> None: self.drop('table', table_name)
+
+    def insert(self, table_name, *values):
+        """
+        with Password: table_name, name, value, password
+        without Pasword: table_name, name, value, ''
+        """
+        # may be select fixme make more accurate guesses on the *values
+        if len(values) == 1:
+            query = list(values)[0]
+            self.run_query(f'insert into {table_name} {query}')
+            return
+
+        name, value, password = values[:3]
+        if str(name).isdigit() or not str(value).isdigit():
+            return
+
+        self.run_query(
+            f"insert into {table_name} values('{name}', {value}, "
+            f"{'NULL' if not password else password}, CURDATE())"
+        )
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
@@ -76,6 +85,15 @@ class UserConnection(BaseConnection):
                 raise AttributeError('does not fucking support many')
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
+
+    def select(self, *args, table_name):
+        match args:
+            case ('*', ) | ():
+                return self.run_query(f'select * from {table_name}')
+            case _:
+                query_string = f'select {str(args)} from {table_name}'
+                query_string = query_string.replace('(', '').replace(')', '').replace('\'', '`')
+                return self.run_query(query_string)
 
     def use(self, db: str) -> None:
         self.run_query(f'use {db}')
@@ -101,27 +119,10 @@ class UserConnection(BaseConnection):
             return cls
         return inner
 
-    @staticmethod
-    def __format_kv_items(string: dict):
-        thestring = ""
-        for key, value in string.items():
-            if (value.isalpha() or value.isalnum()) and value not in ('NULL', 'null'):
-                thestring += f"`{key}`='{value}',"
-                continue
-            thestring += f"`{key}`={value},"
-        return thestring.strip(',')
-
     def update(self, table_name, setvalues: dict, condition: dict) -> None:
         set_string = self.__format_kv_items(setvalues)
         condition_string = self.__format_kv_items(condition)
         print(f"update {table_name} set {set_string} where {condition_string}")
-
-    def create_table(self, table_name):
-        self.run_query(self.tableDescription[0]+table_name+self.tableDescription[1])
-
-    def describe(self, table_name): return self.run_query(f'desc {table_name}')
-
-    def drop_table(self, table_name): self.drop('table', table_name)
 
     def show_tables(self): return self.run_query('show tables')
 
@@ -132,3 +133,13 @@ class UserConnection(BaseConnection):
         if restriction:
             return [db[0] for db in self.show_databases() if db[0] not in restriction]
         return [db[0] for db in self.show_databases()]
+
+    @staticmethod
+    def __format_kv_items(string: dict):
+        thestring = ""
+        for key, value in string.items():
+            if (value.isalpha() or value.isalnum()) and value not in ('NULL', 'null'):
+                thestring += f"`{key}`='{value}',"
+                continue
+            thestring += f"`{key}`={value},"
+        return thestring.strip(',')
