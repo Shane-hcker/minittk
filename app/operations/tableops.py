@@ -19,13 +19,13 @@ class TableOperationMenu(Menu):
 
     def __init__(self, cls):
         self.cls = cls
+        self.master: Combobox = self.cls.selectionCombobox
+        super().__init__(self.master)
         self.tableview: Tableview = self.cls.tree
         self.selected_row: TableRow = ...
         self.isRenameCommandAdded = False
-        super().__init__(selectionCombobox := self.cls.selectionCombobox)
-        self.master: Combobox = selectionCombobox
 
-        self.build_rightClickMenu()
+        self.build()
         self.master.bind('<Button-3>', self.post_event)
         self.cls.window.bind('<Control-n>', self.__create_table)
         self.cls.window.bind('<Control-i>', self.import_from_csv)
@@ -49,7 +49,7 @@ class TableOperationMenu(Menu):
             'password': self.password_entry
         }
 
-    def build_rightClickMenu(self):
+    def build(self):
         config = {
             'export_table': {
                 'label': MessageCatalog.translate('导出表格为csv'),
@@ -203,5 +203,5 @@ class TableOperationMenu(Menu):
     @staticmethod
     def __isTitleValid(string: str) -> bool:
         if not string:
-            raise AttributeError
+            return False
         return False if (len(string) < 2 or string.isdigit() or not string.isascii()) else True
