@@ -34,12 +34,11 @@ class MyConfigParser(configparser.ConfigParser):
 
     def commit(self) -> None: self.write(open(self.cfgfile, 'w'))
 
-    def _set(self, section, option, value, autocommit):
+    def _set(self, section, option, value, autocommit) -> None:
         self.set(section, option, value)
-        if autocommit:
-            self.commit()
+        self.commit() if autocommit else None
 
-    def writeAfterSet(self, *args, cnf=None, autocommit=True):
+    def writeAfterSet(self, *args, cnf=None, autocommit=True) -> None:
         """
         :param autocommit automatically commit after set()
         :param cnf: [
@@ -58,26 +57,17 @@ class MyConfigParser(configparser.ConfigParser):
         if not cnf:
             raise AttributeError('length of `cnf` needs to be >= 1')
 
-        # cnf=list
-        if (cnf_length := len(cnf)) == 1:
-            section, option, value = cnf[0]
-            self._set(section, option, value, autocommit)
-            return
-
-        for dic in range(cnf_length):
-            section, option, value = cnf[dic]
-            self._set(section, option, value)
-        if autocommit:
-            self.commit()
+        [self._set(**cnf[dic], autocommit=autocommit) for dic in range(len(cnf))]
+        self.commit() if autocommit else None
 
     def loadfromFile(self, cfgfile) -> None:
         self.__init__(cfgfile)
 
     def savefromDict(self, savefile) -> None:
         with open(savefile, 'w') as f:
-            for i in self.sections():
-                f.write(f'[{i}]\n')
-                f.writelines([f'{j} = {k}\n' for j, k in self.items(i)])
+            for section in self.sections():
+                f.write(f'[{section}]\n')
+                f.writelines([f'{k} = {v}\n' for k, v in self.items(section)])
 
     def getSectionItems(self, section) -> dict | None:
         if self.cfgfile is None:
