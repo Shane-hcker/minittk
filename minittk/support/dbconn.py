@@ -33,20 +33,27 @@ class UserConnection(BaseConnection):
             "`Last Modified` date not null)"
         ]
 
-    def create_database(self, db) -> None: self.run_query(f'create database {db}')
+    def create(self, ctype, name):
+        match ctype:
+            case 'table':
+                self.run_query(self.tableDescription[0]+f"`{name}`"+self.tableDescription[1])
+            case 'database' | 'db':
+                self.run_query(f'create database `{name}`')
+            case _:
+                raise AttributeError(f'unresolved creating type {ctype}')
 
-    def create_table(self, table_name) -> None:
-        create_query = self.tableDescription[0]+table_name+self.tableDescription[1]
-        self.run_query(create_query)
+    def create_database(self, db) -> None: self.create('db', db)
 
-    def describe(self, table_name): return self.run_query(f'desc {table_name}')
+    def create_table(self, table_name) -> None: self.create('table', table_name)
+
+    def describe(self, table_name): return self.run_query(f'desc `{table_name}`')
 
     def drop(self, drop_type, name):
         match drop_type:
             case 'database' | 'db':
-                self.run_query(f'drop database {name}')
+                self.run_query(f'drop database `{name}`')
             case 'table' | None:
-                self.run_query(f'drop table {name}')
+                self.run_query(f'drop table `{name}`')
             case _:
                 raise AttributeError(f'Unknown drop object {drop_type}')
 
@@ -62,7 +69,7 @@ class UserConnection(BaseConnection):
         # may be select fixme make more accurate guesses on the *values
         if len(values) == 1:
             query = list(values)[0]
-            self.run_query(f'insert into {table_name} {query}')
+            self.run_query(f'insert into `{table_name}` {query}')
             return
 
         name, value, password = values[:3]
@@ -70,7 +77,7 @@ class UserConnection(BaseConnection):
             return
 
         self.run_query(
-            f"insert into {table_name} values('{name}', {value}, "
+            f"insert into `{table_name}` values('{name}', {value}, "
             f"{'NULL' if not password else password}, CURDATE())"
         )
 
@@ -89,14 +96,14 @@ class UserConnection(BaseConnection):
     def select(self, *args, table_name):
         match args:
             case ('*', ) | ():
-                return self.run_query(f'select * from {table_name}')
+                return self.run_query(f'select * from `{table_name}`')
             case _:
-                query_string = f'select {str(args)} from {table_name}'
+                query_string = f'select {str(args)} from `{table_name}`'
                 query_string = query_string.replace('(', '').replace(')', '').replace('\'', '`')
                 return self.run_query(query_string)
 
     def use(self, db: str) -> None:
-        self.run_query(f'use {db}')
+        self.run_query(f'use `{db}`')
         return self.show_tables()
 
     @staticmethod
@@ -113,6 +120,7 @@ class UserConnection(BaseConnection):
             cls.show_tables = partial(cls._connection.show_tables)
             cls.describe = partial(cls._connection.describe)
             cls.create_table = partial(cls._connection.create_table)
+            cls.create_database = partial(cls._connection.create_database)
             cls.select = partial(cls._connection.select)
             cls.tinsert = partial(cls._connection.insert)
             print(f'{cls} runned usemysql()')
@@ -122,7 +130,7 @@ class UserConnection(BaseConnection):
     def update(self, table_name, setvalues: dict, condition: dict) -> None:
         set_string = self.__format_kv_items(setvalues)
         condition_string = self.__format_kv_items(condition)
-        print(f"update {table_name} set {set_string} where {condition_string}")
+        print(f"update `{table_name}` set {set_string} where {condition_string}")
 
     def show_tables(self): return self.run_query('show tables')
 
@@ -131,8 +139,8 @@ class UserConnection(BaseConnection):
     def show_filtered_databases(self, restriction=None) -> list:
         """returns a list of filtered"""
         if restriction:
-            return [db[0] for db in self.show_databases() if db[0] not in restriction]
-        return [db[0] for db in self.show_databases()]
+            return [db for (db, ) in self.show_databases() if db not in restriction]
+        return [db[0] for (db, ) in self.show_databases()]
 
     @staticmethod
     def __format_kv_items(string: dict):

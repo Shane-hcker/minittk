@@ -14,6 +14,11 @@ class MyWidget(tkinter.ttk.Widget):
     def set_state(self, state):
         self['state'] = state
 
+    @staticmethod
+    def forSetAttr(iterable: Iterable, attribute, value):
+        for item in iterable:
+            item[attribute] = value
+
     def rpack(self, *args, **kwargs):
         """returned pack"""
         self.pack(*args, **kwargs)
@@ -65,19 +70,27 @@ class Combobox(MyWidget, ttk.Combobox):
             raise IndexError(f'{item} does not exist in current combobox list')
 
     def reset(self, old, new):
+        """
+        fixme 如果列表中有重复元素 -> reset失败
+        """
         original = list(self.values)
         original[original.index(old)] = new
         self.values = original
 
     @property
-    def values(self): return self['values']
+    def values(self):
+        return self['values']
 
     @values.setter
-    def values(self, values: Iterable[Any]): self['values'] = values
+    def values(self, values: Iterable[Any]):
+        self['values'] = values
 
-    def clear(self): self.set('')
+    def clear(self):
+        self.set('')
 
-    def dbind(self, *args, **kwargs): self.rbind("<<ComboboxSelected>>", *args, **kwargs)
+    def dbind(self, *args, **kwargs):
+        """default bind(ComboboxSelected)"""
+        return self.rbind("<<ComboboxSelected>>", *args, **kwargs)
 
 
 class Entry(MyWidget, ttk.Entry):
@@ -108,9 +121,13 @@ class Menu(ttk.Menu):
     def post_event(self, event):
         self.post(event.x_root, event.y_root)
 
+    @staticmethod
+    def isTitleValid(string: str) -> bool:
+        return False if not string or string.isdigit() or '`' in string or not string.strip() else True
+
 
 class Tableview(MyWidget, ttkTableView):
-    def forInsert(self, iterable, length):
+    def forInsert(self, length, iterable):
         """
         :param iterable: [[...], ...]
         :param length: length of iterable[index]

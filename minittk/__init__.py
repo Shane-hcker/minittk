@@ -10,6 +10,7 @@ from ttkbootstrap.localization.msgcat import MessageCatalog
 from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
 from ttkbootstrap.tooltip import ToolTip
 import tkinter.filedialog as filedialog
+from tkinter import TclError
 
 
 from minittk.widgetqueue import *
@@ -20,3 +21,6 @@ from minittk.support.cfgparser import *
 from minittk.support.dbconn import *
 from minittk.support.uiautomation import *
 from minittk.support.baseconn import *
+
+
+config_file = r'D:\minittk\app\user\config.ini'

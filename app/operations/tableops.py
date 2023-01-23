@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 import csv
-from tkinter import TclError
 from types import NoneType
 from minittk import *
 
@@ -19,13 +18,13 @@ class TableOperationMenu(Menu):
 
     def __init__(self, cls):
         self.cls = cls
+        self.master: Combobox = self.cls.selectionCombobox
+        super().__init__(self.master)
         self.tableview: Tableview = self.cls.tree
         self.selected_row: TableRow = ...
         self.isRenameCommandAdded = False
-        super().__init__(selectionCombobox := self.cls.selectionCombobox)
-        self.master: Combobox = selectionCombobox
 
-        self.build_rightClickMenu()
+        self.build()
         self.master.bind('<Button-3>', self.post_event)
         self.cls.window.bind('<Control-n>', self.__create_table)
         self.cls.window.bind('<Control-i>', self.import_from_csv)
@@ -37,11 +36,14 @@ class TableOperationMenu(Menu):
                                                 state=DISABLED, text='保存修改').rpack(padx=10, pady=10, side=RIGHT)
 
         self.password_entry: Entry = self.cls.add(entry, self.cls.rightSideFrame, bootstyle=WARNING,
-                                                  width=10).rpack(pady=10, side=RIGHT)
+                                                  state=DISABLED, width=10).rpack(pady=10, side=RIGHT)
+
         self.value_entry: Entry = self.cls.add(entry, self.cls.rightSideFrame, bootstyle=INFO,
-                                               width=15).rpack(padx=10, pady=10, side=RIGHT)
+                                               state=DISABLED, width=15).rpack(padx=10, pady=10, side=RIGHT)
+
         self.name_entry: Entry = self.cls.add(entry, self.cls.rightSideFrame, bootstyle=SUCCESS,
-                                              width=15).rpack(pady=10, side=RIGHT)
+                                              state=DISABLED, width=15).rpack(pady=10, side=RIGHT)
+
         self.header = ['Name', 'Value', 'Password']
         self.entry_dict = {
             'name': self.name_entry,
@@ -49,7 +51,7 @@ class TableOperationMenu(Menu):
             'password': self.password_entry
         }
 
-    def build_rightClickMenu(self):
+    def build(self):
         config = {
             'export_table': {
                 'label': MessageCatalog.translate('导出表格为csv'),
@@ -108,6 +110,7 @@ class TableOperationMenu(Menu):
         }
         print(f'tablerow {selected_iid}\'s row items: {row_items}')
         self.saveSlotBtn.set_state(NORMAL)
+        MyWidget.forSetAttr(self.entry_dict.values(), 'state', NORMAL)
         [self.entry_dict[key].reset(row_items[key]) for key in self.entry_dict.keys()]
 
     def update_slot_changes(self) -> None:
@@ -127,6 +130,8 @@ class TableOperationMenu(Menu):
 
         self.selected_row.refresh()
         self.tupdate(self.cls.current_table, pending_update, update_condition)
+        MyWidget.forSetAttr(self.entry_dict.values(), 'state', DISABLED)
+        self.saveSlotBtn.set_state(DISABLED)
         print('finished updating tablerow and db')
 
     def save_as_csv(self, event=None) -> None:
@@ -141,7 +146,7 @@ class TableOperationMenu(Menu):
 
         removed_extension = filename.rstrip('.csv').rstrip('.CSV')
 
-        if not self.__isTitleValid(table_name := removed_extension.split('/')[-1]):
+        if not self.isTitleValid(table_name := removed_extension.split('/')[-1]):
             raise ValueError('请检查表名')
 
         with open(filename, newline='', encoding='utf-8') as f:
@@ -151,9 +156,11 @@ class TableOperationMenu(Menu):
 
     def create_copy(self):
         copied_target = self.master.get()
-        copy_name = Querybox.get_string(f'{copied_target}副本名称', f'为{copied_target}创建副本')
+        string_prompt = f'{copied_target}副本名称\n  -不能为纯数字\n  -不能包含字符" ` "'
+        if not (copy_name := Querybox.get_string(string_prompt, f'为{copied_target}创建副本')):
+            return
 
-        if not self.__isTitleValid(copy_name):
+        if not self.isTitleValid(copy_name):
             raise ValueError('请检查表名')
 
         self.create_table(copy_name)
@@ -163,10 +170,11 @@ class TableOperationMenu(Menu):
         print('successfully copied table')
 
     def __create_table(self, event=None) -> None:
-        if isinstance(string := Querybox.get_string(prompt='输入表格名称', title='Title'), NoneType):
+        string_prompt = '表格名称:\n  -不能为纯数字\n  -不能包含字符" ` "'
+        if not (string := Querybox.get_string(string_prompt, 'Title')):
             return
 
-        if not self.__isTitleValid(string):
+        if not self.isTitleValid(string):
             raise ValueError('请检查表名')
 
         self.create_table(string)
@@ -175,33 +183,27 @@ class TableOperationMenu(Menu):
 
     def delete_table(self) -> None:
         if not self.master.get():
-            Messagebox.show_info(title='提示', message='你没有选择任何表格')
-            return
+            return Messagebox.show_info(title='提示', message='你没有选择任何表格')
 
         dropping_target = self.master.get()
 
-        if Messagebox.yesno(title='delete', message=f'删除{dropping_target}?', parent=self.cls.window) == '确认':
+        if Messagebox.yesno(f'删除{dropping_target}?', 'delete', parent=self.cls.window) == '确认':
             self.master.remove(dropping_target)
+            self.master.clear()
             self.drop(drop_type='table', name=dropping_target)
             print(f'table \'{dropping_target}\' is removed from database')
 
     def rename_table(self) -> None:
-        if isinstance(new_name := Querybox.get_string(prompt='重命名表格', title='Title'), NoneType):
+        string_prompt = '重命名表格\n  -不能为纯数字\n  -不能包含字符" ` "'
+        if not (new_name := Querybox.get_string(string_prompt, 'Title')):
             return
 
-        if not self.__isTitleValid(new_name):
+        if not self.isTitleValid(new_name):
             raise ValueError('请检查表名')
 
-        self.run_query(f'rename table {self.cls.current_table} to {new_name}')
+        self.run_query(f'rename table `{self.cls.current_table}` to `{new_name}`')
         self.master.reset(self.cls.current_table, new_name)
         print(f'renamed table \'{self.cls.current_table}\' to \'{new_name}\' successfully')
-
         self.master.clear()
         if self.tableview.get_rows():
             self.tableview.delete_rows()
-
-    @staticmethod
-    def __isTitleValid(string: str) -> bool:
-        if not string:
-            raise AttributeError
-        return False if (len(string) < 2 or string.isdigit() or not string.isascii()) else True
