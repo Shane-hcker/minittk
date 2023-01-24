@@ -43,15 +43,45 @@ class MyWindow:
     def add(self, wtype, parent=None, **kwargs):
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
         parent_ = self.window if parent_ is None else parent_
-        widget = wtype(parent_, **kwargs)
-        return widget
 
-    def add_trview(self, columns, heads, height=None, parent=None) -> ttk.Treeview:
+        if not (wstyle := kwargs.get('style', None)):
+            return wtype(parent_, **kwargs)
+
+        parsed_style = self.__parse(wstyle)
+        kwargs.pop('style')
+        return wtype(parent_, **kwargs, **parsed_style)
+
+    def add_trview(self, parent=None, *, columns, heads, height=None) -> ttk.Treeview:
         trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
         for i in range(len(columns)):
             trview.column(columns[i], anchor=CENTER)
             trview.heading(columns[i], text=heads[i])
         return trview
+
+    def __parse(self, styles: str) -> dict:
+        """
+        example:
+        initial: w:25; h:250; state:disabled; style:SUCCESS;
+        after parsing: {"width": 25, "height": 50, 'state': "Disabled", "style": "SUCCESS"}
+        fixme lambda: 分号解决
+        """
+        options = {}
+        styles = [item.strip() for item in styles.split(';')]
+        for style in [_.replace(':', ': ').replace(' ', '') for _ in styles]:
+            if 'w:' in style:
+                self.str2dict(options, style.replace('w', '\'width\''))
+            elif 'h:' in style:
+                self.str2dict(options, style.replace('h', '\'height\''))
+            elif not (other := style.split(':'))[-1].isdigit() and 'command:' not in style:
+                self.str2dict(options, f'\'{other[0]}\':\'{other[-1]}\'')
+            else:
+                self.str2dict(options, f'\'{other[0]}\':{other[-1]}')
+        return options
+
+    @staticmethod
+    def str2dict(dic: dict, string: str) -> dict:
+        dic.update(eval(f"{{{string}}}"))
+        return dic
 
     def add_tabview(self, parent=None, **kwargs) -> Tableview:
         return self.add(tableview, parent, **kwargs)
@@ -61,7 +91,7 @@ class MyWindow:
         return self.__class__.windowType
 
     @property
-    def window(self) -> Union[ttk.Window, ttk.Toplevel]:
+    def window(self) -> ttk.Window | ttk.Toplevel:
         return self._window
 
     @property
