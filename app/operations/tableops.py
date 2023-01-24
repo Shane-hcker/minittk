@@ -106,11 +106,13 @@ class TableOperationMenu(Menu):
         row_items = {
             'name': self.selected_row.values[0],
             'value': self.selected_row.values[1],
-            'password': '' if not self.selected_row.values[2] else self.selected_row.values[2]
+            'password': self.selected_row.values[2] if self.selected_row.values[2] else ''
         }
         print(f'tablerow {selected_iid}\'s row items: {row_items}')
+
         self.saveSlotBtn.set_state(NORMAL)
         MyWidget.forSetAttr(self.entry_dict.values(), 'state', NORMAL)
+
         [self.entry_dict[key].reset(row_items[key]) for key in self.entry_dict.keys()]
 
     def update_slot_changes(self) -> None:

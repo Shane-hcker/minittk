@@ -52,12 +52,12 @@ class SettingPage(MyWindow):
 
     def mysql_config(self) -> "SettingPage":
         """MySQL Config Labelframe"""
-        lFrame = self.add(labelframe, text='数据库配置', padding=5).rpack(fill=X, padx=5, side=TOP)
+        lFrame = self.add(labelframe, style='text:数据库配置; padding:5').rpack(fill=X, padx=5, side=TOP)
         self.grid(lFrame, self.cfgParser.getSectionItems('MySQL'))
         return self
 
     def app_config(self) -> "SettingPage":
         """App Config Labelframe"""
-        lFrame = self.add(labelframe, text='软件配置', padding=5).rpack(fill=X, padx=5, pady=5, side=TOP)
+        lFrame = self.add(labelframe, style='text:软件; padding:5').rpack(fill=X, padx=5, pady=5, side=TOP)
         self.grid(lFrame, self.cfgParser.getSectionItems('App'))
         return self

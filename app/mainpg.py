@@ -1,8 +1,9 @@
 # -*- encoding: utf-8 -*-
 from minittk import *
+
+from user.setting import SettingPage
 from operations.tableops import TableOperationMenu
 from operations.dbops import DatabaseOperationMenu
-from user.setting import SettingPage
 
 
 @UserConnection.usemysql()
@@ -15,72 +16,46 @@ class MainPage(MyWindow):
 
         super().__init__('Title', '1200x700', (True, True), startup_pos, self.curr_theme)
 
-        self.isTableLengthOutOfRange: bool = False
         self.isRunningMeetingApp: bool = False
+        self.isTableLengthOutOfRange: bool = False
         self.current_table: str = ...
         self.database_label: Label = ...
+        self.themeCombobox: Combobox = ...
         self.databaseCombobox: Combobox = ...
         self.selectionCombobox: Combobox = ...
-        self.themeCombobox: Combobox = ...
+        self.forbid_db_list = ['information_schema', 'performance_schema', 'mysql']
 
-        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
-        self.rightSideFrame = self.add(frame)  # r < 右侧的 Panedwindow
-
-        self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
         tree_column = [
             {'text': 'Name', 'stretch': True},
             {'text': 'Value', 'stretch': True},
             {'text': 'Password', 'stretch': True},
             {'text': 'Last Modified', 'stretch': True}
         ]
+
+        self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
+        self.rightSideFrame = self.add(frame)
+        self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
+
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
-        self.forbid_db_list = ['information_schema', 'performance_schema', 'mysql']
+
+        self.createSidebar().createViewTab()
+        DatabaseOperationMenu(self)
+        TableOperationMenu(self)
 
     def createSidebar(self) -> "MainPage":
-        lFrame = self.add(labelframe, text='我的数据库 My DataBase', padding=10, bootstyle='success').rpack(
-            fill=X, padx=50, pady=50, side=TOP)  # LabelFrame
+        lFrame = self.add(labelframe, text='我的数据库 My Database', padding=10,
+                          bootstyle=SUCCESS).rpack(fill=X, padx=50, pady=50, side=TOP)
 
-        column = 0
-        funcDict = {'表操作': None, '库操作': None, '命令行': None}
-        for k, v in funcDict.items():
-            self.add(button, lFrame, text=k, command=v).grid(column=column, row=0, ipadx=2, ipady=2, padx=2, pady=2)
-            column += 1
-
-        self.database_label = self.add(text=self.cfgParser.get('MySQL', 'database'),
-                                       wtype=label, parent=lFrame, ).rgrid(column=0, row=1, columnspan=3)
-        self.databaseCombobox = self.add(combobox, lFrame, width=25).rgrid(column=0, row=2, columnspan=3, pady=5)
-        self.databaseCombobox.values = self.show_filtered_databases(restriction=self.forbid_db_list)
-        self.databaseCombobox.dbind(self.__databaseComboboxSelected)
-
-        self.add(label, lFrame, text='选择表格: ').grid(column=0, row=3)
-        self.selectionCombobox = self.add(combobox, lFrame, width=25).rgrid(column=0, row=4, columnspan=3, pady=5)
-        self.selectionCombobox.values = [table[0] for table in self.show_tables()]
-        self.selectionCombobox.dbind(self.__selectionComboboxSelected)
-
+        self.__setupSideBarLabels(master=lFrame)
+        self.__setupSideBarWidgets(master=lFrame)
         self.panedwin.add(lFrame)
         return self
 
     def createViewTab(self) -> "MainPage":
-        self.add(button, self.rightSideTopFrame, text='启动腾讯会议', bootstyle=(SUCCESS, OUTLINE),
-                 command=self.openTX).pack(padx=10, pady=10, side=LEFT)
-        self.add(button, self.rightSideTopFrame, text='启动Zoom', bootstyle=SUCCESS,
-                 command=self.openZoom).pack(pady=10, side=LEFT)
-
-        self.add(button, self.rightSideTopFrame, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
-
-        self.add(label, self.rightSideFrame, text='选择主题:', font=('Microsoft YaHei', 9)).pack(
-                 padx=10, pady=10, side=LEFT)
-
-        self.themeCombobox = self.add(combobox, self.rightSideFrame, width=10, values=self.style.theme_names()).rpack(
-                                      pady=10, side=LEFT).dbind(self.__themeComboboxSelected)
-
-        theme_save = self.add(button, self.rightSideFrame, text='保存主题',
-                              command=self.saveThemeChange, bootstyle=(INFO, OUTLINE))
-        theme_save.pack(padx=10, pady=10, side=LEFT)
-        ToolTip(theme_save, text=f'保存后下次启动的默认主题将为你选定的', wraplength=150, bootstyle='info-inverse')
-
-        self.panedwin.add(self.rightSideFrame)  # 添加到 Panedwindow
+        self.__setupViewTabUpper()
+        self.__setupViewTabLower()
+        self.panedwin.add(self.rightSideFrame)
         return self
 
     def __call__(self, *args, **kwargs):
@@ -88,26 +63,10 @@ class MainPage(MyWindow):
         self._connection.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        DatabaseOperationMenu(self)
-        TableOperationMenu(self)
         self.mainloop()
         self._connection.close()
         if exc_type:
             raise exc_type()
-
-    def openTX(self):
-        if self.isRunningMeetingApp:
-            return
-        self.isRunningMeetingApp = True
-        UIAutomation.openwithTX(self.selectedOptionContent)
-        self.isRunningMeetingApp = False
-
-    def openZoom(self):
-        if self.isRunningMeetingApp:
-            return
-        self.isRunningMeetingApp = True
-        UIAutomation.openwithZoom(self.selectedOptionContent)
-        self.isRunningMeetingApp = False
 
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
@@ -132,10 +91,8 @@ class MainPage(MyWindow):
 
         if len(self.describe(table_name=self.current_table)) == 4:
             self.tree.forInsert(4, self.select('*', table_name=self.current_table))
-            self.tree.load_table_data()
-            return
+            return self.tree.load_table_data()
 
-        # 如果长度>4就从combobox列表中删除该表格
         self.selectionCombobox.clear()
         self.selectionCombobox.remove(self.current_table)
 
@@ -148,6 +105,55 @@ class MainPage(MyWindow):
         self.theme_use(self.curr_theme)
         self.themeCombobox.selection_clear()
 
+    def __setupSideBarLabels(self, master):
+        self.database_label = self.add(text=self.cfgParser.get('MySQL', 'database'),
+                                       wtype=label, parent=master).rgrid(column=0, row=1, columnspan=3)
+        self.add(label, master, text='选择表格: ').grid(column=0, row=3)
+
+    def __setupSideBarWidgets(self, master):
+        addon = partial(self.add, parent=master)
+        addon(button, text='输入SQL指令', command=None, width=25).grid(column=0, row=0, ipady=2, pady=2)
+
+        self.databaseCombobox = addon(combobox, width=25).rgrid(column=0, row=2, columnspan=3, pady=5)
+        self.selectionCombobox = addon(combobox, width=25).rgrid(column=0, row=4, columnspan=3, pady=5)
+
+        self.databaseCombobox.values = self.show_filtered_databases(restriction=self.forbid_db_list)
+        self.selectionCombobox.values = [table[0] for table in self.show_tables()]
+
+        self.databaseCombobox.dbind(self.__databaseComboboxSelected)
+        self.selectionCombobox.dbind(self.__selectionComboboxSelected)
+
+    def __setupViewTabUpper(self):
+        addon = partial(self.add, parent=self.rightSideTopFrame)
+        addon(button, bootstyle=(SUCCESS, OUTLINE), command=lambda: self.open(UIAutomation.openwithTX),
+              text='启动腾讯会议').pack(padx=10, pady=10, side=LEFT)
+
+        addon(button, text='启动Zoom', command=lambda: self.open(UIAutomation.openwithZoom),
+              bootstyle=SUCCESS).pack(pady=10, side=LEFT)
+
+        addon(button, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
+
+    def __setupViewTabLower(self):
+        addon = partial(self.add, parent=self.rightSideFrame)
+        addon(label, text='选择主题:').pack(padx=10, pady=10, side=LEFT)
+
+        self.themeCombobox = addon(combobox, values=self.style.theme_names(),
+                                   width=10).rpack(pady=10, side=LEFT).dbind(self.__themeComboboxSelected)
+
+        theme_save_btn = addon(button, command=self.saveThemeChange, text='保存主题',
+                               bootstyle=(INFO, OUTLINE)).rpack(padx=10, pady=10, side=LEFT)
+
+        display_text = MessageCatalog.translate('保存后下次启动的默认主题将为你选定的')
+        theme_save_btn.attach_tooltip(text=display_text, wraplength=150, bootstyle=(INFO, INVERSE))
+
+    def open(self, app):
+        if self.isRunningMeetingApp:
+            return
+
+        self.isRunningMeetingApp = True
+        app(self.selectedOptionContent)
+        self.isRunningMeetingApp = False
+
     def saveDatabaseChange(self):
         self.cfgParser.writeAfterSet('MySQL', 'database', self.database_label.value)
 
@@ -155,6 +161,10 @@ class MainPage(MyWindow):
         self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
 
 
+def main():
+    app = MainPage()
+    app()
+
+
 if __name__ == '__main__':
-    with MainPage() as window:
-        window.createSidebar().createViewTab()
+    main()

@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from typing import *
 from ttkbootstrap.tableview import Tableview as ttkTableView
+from ttkbootstrap.tooltip import ToolTip
 import ttkbootstrap as ttk
 import tkinter.ttk
 
@@ -18,6 +19,9 @@ class MyWidget(tkinter.ttk.Widget):
     def forSetAttr(iterable: Iterable, attribute, value):
         for item in iterable:
             item[attribute] = value
+
+    def attach_tooltip(self, *args, **kwargs):
+        ToolTip(self, *args, **kwargs)
 
     def rpack(self, *args, **kwargs):
         """returned pack"""
@@ -52,19 +56,19 @@ class Separator(MyWidget, ttk.Separator):
 
 
 class Combobox(MyWidget, ttk.Combobox):
-    def add(self, item):
+    def add(self, *item):
         original = list(self.values)
-        original.append(item)
+        [original.append(data) for data in item]
         original.sort()
         self.values = original
 
-    def remove(self, item):
+    def remove(self, *item):
         if not self.values:
             raise IndexError("Empty combobox list")
 
         original = list(self.values)
         try:
-            original.remove(item)
+            [original.remove(data) for data in item]
             self.values = original
         except IndexError:
             raise IndexError(f'{item} does not exist in current combobox list')
@@ -118,7 +122,7 @@ class Menu(ttk.Menu):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-    def post_event(self, event):
+    def post_event(self, event=None):
         self.post(event.x_root, event.y_root)
 
     @staticmethod
