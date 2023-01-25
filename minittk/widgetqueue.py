@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from ttkbootstrap import Label
+from types import FunctionType, LambdaType
 
 
 class WidgetQueue(list):
@@ -8,19 +8,28 @@ class WidgetQueue(list):
         for item in args:
             self.enqueue(item)
 
-    def getList(self) -> list:
+    def getValue(self) -> list:
         """returns a list of widget.get() method results"""
-        try:
-            return [i.get() for i in self]
-        except Exception:  # if a widget cannot be gotten
-            raise Exception()  # raise Error
+        return [i.get() for i in self]
 
-    def getLabelValue(self) -> list:
-        """returns the `text` attribute of a group of labels"""
-        try:
-            return [i['text'] for i in self if isinstance(i, Label)]
-        except Exception:
-            raise Exception()
+    def configure(self, index, **kwargs):
+        self[index].configure(**kwargs)
+
+    def configureAll(self, filter_=None, **kwargs):
+        """
+        :param filter_: function that has an argument, for filtering items
+        example: lambda x: ...
+        :param kwargs: kw of configure()
+        """
+        if not filter_:
+            for item in self:
+                item.configure(**kwargs)
+            return
+
+        for item in self:
+            if not filter_(item):
+                continue
+            item.configure(**kwargs)
 
     @property
     def empty(self):

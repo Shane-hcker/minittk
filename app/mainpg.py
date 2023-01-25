@@ -161,10 +161,6 @@ class MainPage(MyWindow):
         self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
 
 
-def main():
-    app = MainPage()
-    app()
-
-
 if __name__ == '__main__':
-    main()
+    myapp = MainPage()
+    myapp()

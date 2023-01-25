@@ -90,11 +90,8 @@ class TableOperationMenu(Menu):
             self.add_command(label='重命名', command=self.rename_table)
             self.isRenameCommandAdded = True
         else:
-            try:
-                self.delete('重命名')
-                self.isRenameCommandAdded = False
-            except TclError:
-                pass
+            self.isRenameCommandAdded = False
+            self.delete('重命名')
         super().post_event(event)
 
     def fill_modification_entries(self, event=None) -> None:
@@ -113,7 +110,8 @@ class TableOperationMenu(Menu):
         self.saveSlotBtn.set_state(NORMAL)
         MyWidget.forSetAttr(self.entry_dict.values(), 'state', NORMAL)
 
-        [self.entry_dict[key].reset(row_items[key]) for key in self.entry_dict.keys()]
+        for key in self.entry_dict.keys():
+            self.entry_dict[key].reset(row_items[key])
 
     def update_slot_changes(self) -> None:
         if not (self.name_entry.get() and self.value_entry.get().isdigit()):
@@ -124,11 +122,9 @@ class TableOperationMenu(Menu):
 
         for ndx, entry_item in enumerate(self.entry_dict.values()):
             value = entry_item.get()
-            self.selected_row.values[ndx] = None if ndx == 2 and not value else value
+            password = self.selected_row.values[ndx] = value if ndx != 2 and value else None
 
-            pending_update.update(
-                {self.header[ndx]: self.selected_row.values[ndx] if self.selected_row.values[ndx] else 'null'}
-            )
+            pending_update.update({self.header[ndx]: password if password else 'null'})
 
         self.selected_row.refresh()
         self.tupdate(self.cls.current_table, pending_update, update_condition)
@@ -138,22 +134,23 @@ class TableOperationMenu(Menu):
 
     def save_as_csv(self, event=None) -> None:
         if not self.tableview.tablerows:
-            return Messagebox.show_error(title='', message='no table is selected')
+            return Messagebox.show_error('no table is selected')
         self.tableview.export_all_records()
 
     def import_from_csv(self, event=None) -> None:
-        if not (filename := filedialog.askopenfilename(parent=self.cls.window, filetypes=[('CSV', 'csv')],
-                                                       title='通过csv导入')):
+        askopen_opt = dict(parent=self.cls.window, filetypes=[('CSV', 'csv')], title='通过csv导入')
+        if not (filename := filedialog.askopenfilename(**askopen_opt)):
             return
 
-        removed_extension = filename.rstrip('.csv').rstrip('.CSV')
+        pure_filename = filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]
 
-        if not self.isTitleValid(table_name := removed_extension.split('/')[-1]):
+        if not self.isTitleValid(table_name := pure_filename):
             raise ValueError('请检查表名')
 
         with open(filename, newline='', encoding='utf-8') as f:
             self.create_table(table_name)
-            [self.tinsert(table_name, line[0], line[1], line[2]) for line in csv.reader(f)]
+            for item in csv.reader(f):
+                self.tinsert(table_name, item[0], item[1], item[2])
             self.master.add(table_name)
 
     def create_copy(self):
@@ -189,11 +186,13 @@ class TableOperationMenu(Menu):
 
         dropping_target = self.master.get()
 
-        if Messagebox.yesno(f'删除{dropping_target}?', 'delete', parent=self.cls.window) == '确认':
-            self.master.remove(dropping_target)
-            self.master.clear()
-            self.drop(drop_type='table', name=dropping_target)
-            print(f'table \'{dropping_target}\' is removed from database')
+        if Messagebox.yesno(f'删除{dropping_target}?', 'delete', parent=self.cls.window) != '确认':
+            return
+
+        self.master.remove(dropping_target)
+        self.master.clear()
+        self.drop(drop_type='table', name=dropping_target)
+        print(f'table \'{dropping_target}\' is removed from database')
 
     def rename_table(self) -> None:
         string_prompt = '重命名表格\n  -不能为纯数字\n  -不能包含字符" ` "'
@@ -206,6 +205,7 @@ class TableOperationMenu(Menu):
         self.run_query(f'rename table `{self.cls.current_table}` to `{new_name}`')
         self.master.reset(self.cls.current_table, new_name)
         print(f'renamed table \'{self.cls.current_table}\' to \'{new_name}\' successfully')
+
         self.master.clear()
         if self.tableview.get_rows():
             self.tableview.delete_rows()

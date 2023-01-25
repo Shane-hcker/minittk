@@ -53,11 +53,12 @@ class MyConfigParser(configparser.ConfigParser):
         if args:
             self._set(*args, autocommit=autocommit)
             return
-
         if not cnf:
             raise AttributeError('length of `cnf` needs to be >= 1')
 
-        [self._set(**cnf[dic], autocommit=autocommit) for dic in range(len(cnf))]
+        for dic in range(len(cnf)):
+            self._set(**cnf[dic], autocommit=autocommit)
+
         self.commit() if autocommit else None
 
     def loadfromFile(self, cfgfile) -> None:
