@@ -127,10 +127,10 @@ class UserConnection(BaseConnection):
             return cls
         return inner
 
-    def update(self, table_name, setvalues: dict, condition: dict) -> None:
+    def update(self, table_name, setvalues: dict, primaryKey: dict) -> None:
         set_string = self.__format_kv_items(setvalues)
-        condition_string = self.__format_kv_items(condition)
-        print(f"update `{table_name}` set {set_string} where {condition_string}")
+        key_string = self.__format_kv_items(primaryKey)
+        print(f"update `{table_name}` set {set_string} where {key_string}")
 
     def show_tables(self): return self.run_query('show tables')
 

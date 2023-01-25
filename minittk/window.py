@@ -25,7 +25,7 @@ class MyWindow:
         position = '' if not isinstance(position, Iterable) else f'+{position[0]}+{position[1]}'
         self._window = self.windowtype(themename=theme) if self.windowtype == ttk.Window else self.windowtype()
         self.window.title(title)
-        self.window.geometry(geometry+position)
+        self.window.geometry(geometry + position)
         self.window.resizable(*resizable)
         self._style = ttk.Style()
 
@@ -44,7 +44,7 @@ class MyWindow:
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
         parent_ = self.window if parent_ is None else parent_
 
-        if not (wstyle := kwargs.get('style', None)):
+        if not (wstyle := kwargs.get('style')):
             return wtype(parent_, **kwargs)
 
         parsed_style = self.__parse(wstyle)
@@ -54,28 +54,34 @@ class MyWindow:
     def add_trview(self, parent=None, *, columns, heads, height=None) -> ttk.Treeview:
         trview = self.add(treeview, parent, column=columns[1:], height=height, bootstyle='primary')
         for i in range(len(columns)):
-            trview.column(columns[i], anchor=CENTER)
+            trview.column(columns[i], anchor='center')
             trview.heading(columns[i], text=heads[i])
         return trview
 
     def __parse(self, styles: str) -> dict:
         """
+        does not support lambda + command attributes
         example:
         initial: w:25; h:250; state:disabled; style:SUCCESS;
         after parsing: {"width": 25, "height": 50, 'state': "Disabled", "style": "SUCCESS"}
-        fixme lambda: 分号解决
         """
         options = {}
         styles = [item.strip() for item in styles.split(';')]
-        for style in [_.replace(':', ': ').replace(' ', '') for _ in styles]:
-            if 'w:' in style:
+        for style in [_.replace(':', ': ').replace(' ', '').replace('command:', 'command=') for _ in styles]:
+            if 'command=' in style:
+                self.str2dict(options, f'\'command\':{style.split("command=")[-1]}')
+            elif 'w:' in style:
                 self.str2dict(options, style.replace('w', '\'width\''))
             elif 'h:' in style:
                 self.str2dict(options, style.replace('h', '\'height\''))
-            elif not (other := style.split(':'))[-1].isdigit() and 'command:' not in style:
+            elif not (other := style.split(':'))[-1].isdigit():
                 self.str2dict(options, f'\'{other[0]}\':\'{other[-1]}\'')
             else:
                 self.str2dict(options, f'\'{other[0]}\':{other[-1]}')
+
+        if isinstance(options.get(''), str):
+            options.pop('')
+
         return options
 
     @staticmethod

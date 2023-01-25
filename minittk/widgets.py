@@ -3,6 +3,7 @@ from typing import *
 from ttkbootstrap.tableview import Tableview as ttkTableView
 from ttkbootstrap.tooltip import ToolTip
 import ttkbootstrap as ttk
+from tkinter import TclError
 import tkinter.ttk
 
 
@@ -68,7 +69,8 @@ class Combobox(MyWidget, ttk.Combobox):
 
         original = list(self.values)
         try:
-            [original.remove(data) for data in item]
+            for data in item:
+                original.remove(data)
             self.values = original
         except IndexError:
             raise IndexError(f'{item} does not exist in current combobox list')
@@ -103,6 +105,9 @@ class Entry(MyWidget, ttk.Entry):
         self.delete(0, 'end')
         self.insert('end', value)
 
+    def set(self, value):
+        self.reset(value)
+
     @property
     def value(self):
         return self.get()
@@ -117,6 +122,9 @@ class Label(MyWidget, ttk.Label):
     def value(self, text):
         self['text'] = text
 
+    def get(self):
+        return self.value
+
 
 class Menu(ttk.Menu):
     def __init__(self, master, *args, **kwargs):
@@ -128,6 +136,12 @@ class Menu(ttk.Menu):
     @staticmethod
     def isTitleValid(string: str) -> bool:
         return False if not string or string.isdigit() or '`' in string or not string.strip() else True
+
+    def delete(self, index1, index2=None) -> None:
+        try:
+            super().delete(index1, index2)
+        except TclError:
+            print(f'tcl error, cannot delete {index1}, {index2}')
 
 
 class Tableview(MyWidget, ttkTableView):
@@ -145,6 +159,9 @@ class Tableview(MyWidget, ttkTableView):
 
     def get_selected_row_iid(self):
         return self.view.focus()
+
+    def get(self):
+        return self.get_selected_row()
 
 
 class ScrolledText(MyWidget, ttk.ScrolledText):
