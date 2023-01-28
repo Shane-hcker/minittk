@@ -66,7 +66,7 @@ class UserConnection(BaseConnection):
         with Password: table_name, name, value, password
         without Pasword: table_name, name, value, ''
         """
-        # may be select fixme make more accurate guesses on the *values
+        # may be select
         if len(values) == 1:
             query = list(values)[0]
             self.run_query(f'insert into `{table_name}` {query}')

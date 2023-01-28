@@ -76,9 +76,6 @@ class Combobox(MyWidget, ttk.Combobox):
             raise IndexError(f'{item} does not exist in current combobox list')
 
     def reset(self, old, new):
-        """
-        fixme 如果列表中有重复元素 -> reset失败
-        """
         original = list(self.values)
         original[original.index(old)] = new
         self.values = original

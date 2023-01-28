@@ -40,6 +40,12 @@ class MyWindow:
     def __call__(self, *args, **kwargs) -> None:
         self.mainloop()
 
+    def protocol(self, name=None, func=None):
+        self.window.protocol(name, func)
+
+    def destroy(self):
+        self.window.destroy()
+
     def add(self, wtype, parent=None, **kwargs):
         parent_ = parent.window if isinstance(parent, MyWindow) else parent
         parent_ = self.window if parent_ is None else parent_
