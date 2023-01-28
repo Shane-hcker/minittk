@@ -68,7 +68,7 @@ class UserConnection(BaseConnection):
         """
         # may be select
         if len(values) == 1:
-            query = list(values)[0]
+            query = values[0]
             self.run_query(f'insert into `{table_name}` {query}')
             return
 
