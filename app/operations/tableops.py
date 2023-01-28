@@ -83,15 +83,14 @@ class TableOperationMenu(Menu):
         self.add_command(cnf=config.get('create_copy'))
 
     def post_event(self, event=None):
-        if self.master.get():
-            if self.isRenameCommandAdded:
-                super().post_event(event)
-                return
-            self.add_command(label='重命名', command=self.rename_table)
-            self.isRenameCommandAdded = True
-        else:
+        if not self.master.get():
             self.isRenameCommandAdded = False
             self.delete('重命名')
+        else:
+            if self.isRenameCommandAdded:
+                return super().post_event(event)
+            self.add_command(label='重命名', command=self.rename_table)
+            self.isRenameCommandAdded = True
         super().post_event(event)
 
     def fill_modification_entries(self, event=None) -> None:
@@ -185,8 +184,8 @@ class TableOperationMenu(Menu):
             return Messagebox.show_info(title='提示', message='你没有选择任何表格')
 
         dropping_target = self.master.get()
-
-        if Messagebox.yesno(f'删除{dropping_target}?', 'delete', parent=self.cls.window) != '确认':
+        ask_delete = Messagebox.yesno(f'删除{dropping_target}?', 'delete', parent=self.cls.window)
+        if ask_delete != MessageCatalog.translate('确认'):
             return
 
         self.master.remove(dropping_target)
