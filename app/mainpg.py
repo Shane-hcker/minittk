@@ -67,6 +67,21 @@ class MainPage(MyWindow):
         self.database_label.grid(column=0, row=1, columnspan=3)
         self.add(label, master, text='选择表格: ').grid(column=0, row=3)
 
+    def __setupTemporaryMeeting(self, master):
+        addon = partial(self.add, parent=master)
+        addon(label, text='临时入会: ').grid(column=0, row=6)
+
+        addon(label, text='会议码:').grid(column=0, row=7, pady=5)
+        id_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=7, pady=5)
+
+        addon(label, text='密码(如需):').grid(column=0, row=8)
+        pwd_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=8, pady=5)
+
+        self.uploadCheckbutton = addon(checkbutton, text='保存会议数据到当前表格', bootstyle=(INFO, ROUND, TOGGLE),
+                                       command=self.__uploadCheckbuttonTrigger, variable=self.checkbuttonBooleanVar)
+        self.uploadCheckbutton.grid(column=0, row=9, columnspan=2, pady=5)
+        self.uploadCheckbutton.invoke() if self.cfgParser.getboolean('Meeting', 'uploadtotable') else None
+
     def __setupSideBarWidgets(self, master):
         addon = partial(self.add, parent=master)
         addon(button, text='输入SQL指令', command=None, width=25).grid(column=0, row=0, columnspan=3, ipady=2, pady=2)
@@ -81,23 +96,9 @@ class MainPage(MyWindow):
 
         self.databaseCombobox.grid(column=0, row=2, columnspan=3, pady=5)
         self.selectionCombobox.grid(column=0, row=4, columnspan=3, pady=5)
+
         addon(separator, bootstyle=SUCCESS).grid(sticky='ew', column=0, columnspan=3, row=5, pady=15)
         self.__setupTemporaryMeeting(master)
-
-    def __setupTemporaryMeeting(self, master):
-        addon = partial(self.add, parent=master)
-        addon(label, text='临时入会: ').grid(column=0, row=6)
-
-        addon(label, text='会议码:').grid(column=0, row=7, pady=5)
-        id_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=7, pady=5)
-
-        addon(label, text='密码(如需):').grid(column=0, row=8)
-        pwd_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=8, pady=5)
-
-        self.uploadCheckbutton = addon(checkbutton, text='保存会议数据到当前表格', bootstyle=(INFO, ROUND, TOGGLE),
-                                       onvalue=True, offvalue=False, command=self.__uploadCheckbuttonTrigger,
-                                       variable=self.checkbuttonBooleanVar)
-        self.uploadCheckbutton.grid(column=0, row=9, columnspan=2, pady=5)
 
     def __setupViewTabUpper(self):
         addon = partial(self.add, parent=self.rightSideTopFrame)
@@ -135,7 +136,8 @@ class MainPage(MyWindow):
         self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
 
     def __uploadCheckbuttonTrigger(self):
-        print(self.checkbuttonBooleanVar.get())
+        doUpload = str(self.checkbuttonBooleanVar.get())
+        self.cfgParser.writeAfterSet('Meeting', 'uploadtotable', doUpload)
 
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
@@ -148,11 +150,8 @@ class MainPage(MyWindow):
         self.selectionCombobox.clear()
 
         self.database_label.value = get_selected
-        if self.database_label.value != self.cfgParser.get('MySQL', 'database'):
-            self.saveDatabaseChange()
-
-        if self.tree.get_rows():
-            self.tree.delete_rows()
+        self.saveDatabaseChange() if self.database_label.value != self.cfgParser.get('MySQL', 'database') else None
+        self.tree.delete_rows() if self.tree.get_rows() else None
 
     def __selectionComboboxSelected(self, event):
         self.current_table = self.selectionCombobox.get()
