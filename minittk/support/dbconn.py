@@ -68,18 +68,13 @@ class UserConnection(BaseConnection):
         """
         # may be select
         if len(values) == 1:
-            query = values[0]
-            self.run_query(f'insert into `{table_name}` {query}')
-            return
+            return self.run_query(f'insert into `{table_name}` {values[0]}')
 
         name, value, password = values[:3]
-        if str(name).isdigit() or not str(value).isdigit():
-            return
-
-        self.run_query(
-            f"insert into `{table_name}` values('{name}', {value}, "
-            f"{'NULL' if not password else password}, CURDATE())"
-        )
+        if str(value).isdigit():
+            self.run_query(
+                f"insert into `{table_name}` values('{name}', {value}, "
+                f"{'NULL' if not password else password}, CURDATE())")
 
     def run_query(self, query, fetch=None):
         self.csr.execute(query)
@@ -93,12 +88,12 @@ class UserConnection(BaseConnection):
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
 
-    def select(self, *args, table_name):
+    def select(self, *args, table_name, condition=''):
         match args:
             case ('*', ) | ():
-                return self.run_query(f'select * from `{table_name}`')
+                return self.run_query(f'select * from `{table_name}` {condition}')
             case _:
-                query_string = f'select {str(args)} from `{table_name}`'
+                query_string = f'select {str(args)} from `{table_name}` {condition}'
                 query_string = query_string.replace('(', '').replace(')', '').replace('\'', '`')
                 return self.run_query(query_string)
 

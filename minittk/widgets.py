@@ -59,7 +59,7 @@ class Separator(MyWidget, ttk.Separator):
 class Combobox(MyWidget, ttk.Combobox):
     def add(self, *item):
         original = list(self.values)
-        [original.append(data) for data in item]
+        original += item
         original.sort()
         self.values = original
 
