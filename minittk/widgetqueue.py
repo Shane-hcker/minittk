@@ -1,12 +1,8 @@
 # -*- encoding: utf-8 -*-
-from types import FunctionType, LambdaType
-
-
 class WidgetQueue(list):
     def __init__(self, *args):
         super().__init__()
-        for item in args:
-            self.enqueue(item)
+        self.extend(args)
 
     def release(self):
         for _ in self:

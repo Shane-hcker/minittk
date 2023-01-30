@@ -28,7 +28,7 @@ class BaseConnection(pymysql.Connection, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def select(self, *args, table_name):
+    def select(self, *args, **kwargs):
         """
         Select data from a table
         Usage:
@@ -38,7 +38,7 @@ class BaseConnection(pymysql.Connection, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def insert(self, table_name, *values):
+    def insert(self, *args, **kwargs):
         """
         Insertion
         Usage:

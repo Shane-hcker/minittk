@@ -14,6 +14,7 @@ class TableOperationMenu(Menu):
       - 删除 x
       - 创建副本表格(new name) x
       - 重命名 x
+      - 添加临时会议数据
     """
 
     def __init__(self, cls):
@@ -32,8 +33,8 @@ class TableOperationMenu(Menu):
         for key in ['<Double-1>', '<Return>']:
             self.tableview.view.bind(key, self.fill_modification_entries)
 
-        self.saveSlotBtn: Button = self.cls.add(button, self.cls.rightSideFrame, command=self.update_slot_changes,
-                                                state=DISABLED, text='保存修改').rpack(padx=10, pady=10, side=RIGHT)
+        self.saveDataButton: Button = self.cls.add(button, self.cls.rightSideFrame, command=self.update_data_changes,
+                                                   state=DISABLED, text='保存修改').rpack(padx=10, pady=10, side=RIGHT)
 
         self.password_entry: Entry = self.cls.add(entry, self.cls.rightSideFrame, bootstyle=WARNING,
                                                   state=DISABLED, width=10).rpack(pady=10, side=RIGHT)
@@ -106,13 +107,13 @@ class TableOperationMenu(Menu):
         }
         print(f'tablerow {selected_iid}\'s row items: {row_items}')
 
-        self.saveSlotBtn.set_state(NORMAL)
+        self.saveDataButton.set_state(NORMAL)
         MyWidget.forSetAttr(self.entry_dict.values(), 'state', NORMAL)
 
         for key in self.entry_dict.keys():
             self.entry_dict[key].reset(row_items[key])
 
-    def update_slot_changes(self) -> None:
+    def update_data_changes(self) -> None:
         if not (self.name_entry.get() and self.value_entry.get().isdigit()):
             return ToastNotification('Warning', 'check your fillings', duration=3000).show_toast()
 
@@ -128,7 +129,7 @@ class TableOperationMenu(Menu):
         self.selected_row.refresh()
         self.tupdate(self.cls.current_table, pending_update, update_condition)
         MyWidget.forSetAttr(self.entry_dict.values(), 'state', DISABLED)
-        self.saveSlotBtn.set_state(DISABLED)
+        self.saveDataButton.set_state(DISABLED)
         print('finished updating tablerow and db')
 
     def save_as_csv(self, event=None) -> None:

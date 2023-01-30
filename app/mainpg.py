@@ -1,6 +1,4 @@
 # -*- encoding: utf-8 -*-
-from functools import wraps
-
 from minittk import *
 
 from user.setting import SettingPage
@@ -13,20 +11,24 @@ from operations.dbops import DatabaseOperationMenu
 class MainPage(MyWindow):
     def __init__(self):
         print(f'__init__(): {self}, id: {id(self)}')
-        self.curr_theme = self.cfgParser.get('App', 'theme')
         startup_pos = (self.cfgParser.getint('App', 'startup.x'), self.cfgParser.getint('App', 'startup.y'))
-
-        super().__init__('Title', '1200x700', (True, True), startup_pos, self.curr_theme)
 
         self.isRunningMeetingApp: bool = False
         self.isTableLengthOutOfRange: bool = False
+
+        self.curr_theme = self.cfgParser.get('App', 'theme')
         self.current_table: str = ...
         self.database_label: Label = ...
+
         self.themeCombobox: Combobox = ...
         self.databaseCombobox: Combobox = ...
         self.selectionCombobox: Combobox = ...
+
+        self.tempValueEntry: Entry = ...
+        self.tempPwdEntry: Entry = ...
+
         self.uploadCheckbutton: Checkbutton = ...
-        self.checkbuttonBooleanVar = boolvar()
+
         self.forbid_db_list = ['information_schema', 'performance_schema', 'mysql']
 
         tree_column = [
@@ -36,6 +38,9 @@ class MainPage(MyWindow):
             {'text': 'Last Modified', 'stretch': True}
         ]
 
+        super().__init__('Title', '1200x700', (True, True), startup_pos, self.curr_theme)
+
+        self.checkbuttonBooleanVar = boolvar()
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
         self.rightSideFrame = self.add(frame)
         self.rightSideTopFrame = self.add(frame, parent=self.rightSideFrame, height=5).rpack(fill=X)
@@ -67,21 +72,6 @@ class MainPage(MyWindow):
         self.database_label.grid(column=0, row=1, columnspan=3)
         self.add(label, master, text='选择表格: ').grid(column=0, row=3)
 
-    def __setupTemporaryMeeting(self, master):
-        addon = partial(self.add, parent=master)
-        addon(label, text='临时入会: ').grid(column=0, row=6)
-
-        addon(label, text='会议码:').grid(column=0, row=7, pady=5)
-        id_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=7, pady=5)
-
-        addon(label, text='密码(如需):').grid(column=0, row=8)
-        pwd_entry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=8, pady=5)
-
-        self.uploadCheckbutton = addon(checkbutton, text='保存会议数据到当前表格', bootstyle=(INFO, ROUND, TOGGLE),
-                                       command=self.__uploadCheckbuttonTrigger, variable=self.checkbuttonBooleanVar)
-        self.uploadCheckbutton.grid(column=0, row=9, columnspan=2, pady=5)
-        self.uploadCheckbutton.invoke() if self.cfgParser.getboolean('Meeting', 'uploadtotable') else None
-
     def __setupSideBarWidgets(self, master):
         addon = partial(self.add, parent=master)
         addon(button, text='输入SQL指令', command=None, width=25).grid(column=0, row=0, columnspan=3, ipady=2, pady=2)
@@ -98,7 +88,26 @@ class MainPage(MyWindow):
         self.selectionCombobox.grid(column=0, row=4, columnspan=3, pady=5)
 
         addon(separator, bootstyle=SUCCESS).grid(sticky='ew', column=0, columnspan=3, row=5, pady=15)
-        self.__setupTemporaryMeeting(master)
+
+        # setupTemporaryMeeting
+        addon(label, text='临时入会: ').grid(column=0, row=6)
+
+        addon(label, text='会议码:').grid(column=0, row=7, pady=5)
+        self.tempValueEntry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=7, pady=5)
+
+        addon(label, text='密码(如需):').grid(column=0, row=8)
+        self.tempPwdEntry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=8, pady=5)
+
+        self.uploadCheckbutton = addon(
+            checkbutton,
+            text='保存会议数据到当前表格',
+            bootstyle=(INFO, ROUND, TOGGLE),
+            command=self.__uploadCheckbuttonTrigger,
+            variable=self.checkbuttonBooleanVar
+        ).rgrid(column=0, row=9, columnspan=2, pady=10)
+
+        self.uploadCheckbutton.invoke() if self.cfgParser.getboolean('Meeting', 'uploadable') else None
+        self.uploadCheckbutton.set_state(DISABLED)
 
     def __setupViewTabUpper(self):
         addon = partial(self.add, parent=self.rightSideTopFrame)
@@ -124,10 +133,19 @@ class MainPage(MyWindow):
         theme_save_btn.attach_tooltip(text=display_text, wraplength=150, bootstyle=(INFO, INVERSE))
 
     def open(self, app):
-        if not self.isRunningMeetingApp:
-            self.isRunningMeetingApp = True
-            app(self.selectedOptionContent)
+        if self.isRunningMeetingApp:
+            return
+
+        self.isRunningMeetingApp = True
+        optionContent = self.getTempData() if self.tempValueEntry.value else self.selectedOptionContent
+
+        if optionContent:
+            app(optionContent)
             self.isRunningMeetingApp = False
+            return
+
+        self.isRunningMeetingApp = False
+        return Messagebox.show_error(message='你未选择任何数据', title='错误')
 
     def saveDatabaseChange(self):
         self.cfgParser.writeAfterSet('MySQL', 'database', self.database_label.value)
@@ -136,13 +154,28 @@ class MainPage(MyWindow):
         self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
 
     def __uploadCheckbuttonTrigger(self):
-        doUpload = str(self.checkbuttonBooleanVar.get())
-        self.cfgParser.writeAfterSet('Meeting', 'uploadtotable', doUpload)
+        uploadable = str(self.checkbuttonBooleanVar.get())
+        self.cfgParser.writeAfterSet('Meeting', 'uploadable', uploadable)
+
+    def getTempData(self):
+        """intervene temporary meeting slot to table"""
+        value = self.tempValueEntry.value
+        password = self.tempPwdEntry.value if self.tempPwdEntry.value else 'null'
+
+        if not self.checkbuttonBooleanVar.get():
+            return value, password
+
+        name = Querybox.get_string('请输入你要保存的条目的名称', 'Title')
+        self.tinsert(self.current_table, name, value, password)
+        self.tree.insert_row(values=self.select('*', table_name=self.current_table,
+                                                condition=f'where `Name`=\'{name}\'')[0])
+        self.tree.load_table_data()
+        return value, password
 
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
-        value = self.tree.get_selected_row()
-        return None if not value else (value['1'], value['2'])  # set()获取当前row的值
+        value = self.tree.get_selected_row()  # set()获取当前row的值
+        return None if not value else (value['1'], value['2'])
 
     def __databaseComboboxSelected(self, event):
         get_selected = self.databaseCombobox.get()
@@ -159,7 +192,8 @@ class MainPage(MyWindow):
 
         if len(self.describe(table_name=self.current_table)) == 4:
             self.tree.forInsert(4, self.select('*', table_name=self.current_table))
-            return self.tree.load_table_data()
+            self.tree.load_table_data()
+            return self.uploadCheckbutton.set_state(NORMAL)
 
         self.selectionCombobox.clear()
         self.selectionCombobox.remove(self.current_table)

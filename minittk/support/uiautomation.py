@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from ttkbootstrap.dialogs.dialogs import Messagebox
 from os import startfile
 from time import sleep
 from typing import *
@@ -29,18 +28,17 @@ class UIAutomation:
 
     @staticmethod
     def openwithTX(login_content: Tuple[str, int]):
-        if not login_content:
-            return Messagebox.show_error(message='你未选择任何数据', title='错误')
-
         def openLangTX(app_lang=None):
             print(f'switched to {app_lang} mode')
             meetingid, password = login_content
             pyautogui.typewrite(meetingid)
             sleep(1.5)
             pyautogui.leftClick(UIAutomation.__waitForLocate(f'./meetingapps/tx/join_{app_lang}.png'))
-            if password == 'None':
+
+            if password in ['None', 'null', 'NULL', '']:
                 print(f'{app_lang} version ran')
                 return
+
             UIAutomation.__waitForLocate('./meetingapps/tx/hide_pwd.png')
             pyautogui.typewrite(password)
             pyautogui.press('enter')
@@ -72,9 +70,6 @@ class UIAutomation:
 
     @staticmethod
     def openwithZoom(login_content: Tuple[str, int]):
-        if not login_content:
-            return Messagebox.show_error(message='你未选择任何数据', title='错误')
-
         meetingid, password = login_content
         startfile(MyConfigParser().get('Launch', 'zoom'))
         pyautogui.leftClick(UIAutomation.__waitForLocate('./meetingapps/zoom/join_meeting_zh.png'))
