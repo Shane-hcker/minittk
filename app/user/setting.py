@@ -17,7 +17,8 @@ class SettingPage(MyWindow):
         self.entryBooleanDict = {}  # Entry: boolean(saved)
         self.configSaved = True
         self.focusEntry = None
-        self.entryQueue = self.labelQueue = WidgetQueue()
+        self.entryQueue = WidgetQueue[Entry]()
+        self.labelQueue = WidgetQueue[Label]()
 
         self.save_btn = self.add(button, text='保存配置', command=self.save_config)
         self.save_btn.pack(ipadx=5, anchor='nw', padx=5, pady=5)

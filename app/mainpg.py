@@ -98,13 +98,10 @@ class MainPage(MyWindow):
         addon(label, text='密码(如需):').grid(column=0, row=8)
         self.tempPwdEntry = addon(entry, bootstyle=SUCCESS, width=20).rgrid(column=1, row=8, pady=5)
 
-        self.uploadCheckbutton = addon(
-            checkbutton,
-            text='保存会议数据到当前表格',
-            bootstyle=(INFO, ROUND, TOGGLE),
-            command=self.__uploadCheckbuttonTrigger,
-            variable=self.checkbuttonBooleanVar
-        ).rgrid(column=0, row=9, columnspan=2, pady=10)
+        self.uploadCheckbutton = addon(checkbutton, text='保存会议数据到当前表格', variable=self.checkbuttonBooleanVar,
+                                       command=self.__uploadCheckbuttonTrigger, bootstyle=(INFO, ROUND, TOGGLE))
+
+        self.uploadCheckbutton.grid(column=0, row=9, columnspan=2, pady=10)
 
         self.uploadCheckbutton.invoke() if self.cfgParser.getboolean('Meeting', 'uploadable') else None
         self.uploadCheckbutton.set_state(DISABLED)
@@ -132,6 +129,27 @@ class MainPage(MyWindow):
         display_text = MessageCatalog.translate('保存后下次启动的默认主题将为你选定的')
         theme_save_btn.attach_tooltip(text=display_text, wraplength=150, bootstyle=(INFO, INVERSE))
 
+    def __uploadCheckbuttonTrigger(self):
+        uploadable = str(self.checkbuttonBooleanVar.get())
+        self.cfgParser.writeAfterSet('Meeting', 'uploadable', uploadable)
+
+    def getTempData(self):
+        """intervene temporary meeting slot to table"""
+        value = self.tempValueEntry.value
+        password = self.tempPwdEntry.value if self.tempPwdEntry.value else 'null'
+
+        if not self.checkbuttonBooleanVar.get():
+            return value, password
+
+        if not (name := Querybox.get_string('请输入你要保存的条目的名称', 'Title')):
+            return
+
+        self.tinsert(self.current_table, name, value, password)
+        self.tree.insert_row(values=self.select('*', condition=f'where `Name`=\'{name}\'')[0],
+                             table_name=self.current_table)
+        self.tree.load_table_data()
+        return value, password
+
     def open(self, app):
         if self.isRunningMeetingApp:
             return
@@ -152,25 +170,6 @@ class MainPage(MyWindow):
 
     def saveThemeChange(self):
         self.cfgParser.writeAfterSet('App', 'theme', self.curr_theme)
-
-    def __uploadCheckbuttonTrigger(self):
-        uploadable = str(self.checkbuttonBooleanVar.get())
-        self.cfgParser.writeAfterSet('Meeting', 'uploadable', uploadable)
-
-    def getTempData(self):
-        """intervene temporary meeting slot to table"""
-        value = self.tempValueEntry.value
-        password = self.tempPwdEntry.value if self.tempPwdEntry.value else 'null'
-
-        if not self.checkbuttonBooleanVar.get():
-            return value, password
-
-        name = Querybox.get_string('请输入你要保存的条目的名称', 'Title')
-        self.tinsert(self.current_table, name, value, password)
-        self.tree.insert_row(values=self.select('*', table_name=self.current_table,
-                                                condition=f'where `Name`=\'{name}\'')[0])
-        self.tree.load_table_data()
-        return value, password
 
     @property
     def selectedOptionContent(self) -> Tuple[Any, Any]:
@@ -212,12 +211,11 @@ class MainPage(MyWindow):
         self._connection.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.mainloop()
-        self._connection.close()
+        self.__call__()
         if exc_type:
             raise exc_type()
 
 
 if __name__ == '__main__':
-    window = MainPage()
-    window()
+    with MainPage() as window:
+        pass

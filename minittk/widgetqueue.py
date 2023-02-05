@@ -1,5 +1,10 @@
 # -*- encoding: utf-8 -*-
-class WidgetQueue(list):
+from typing import TypeVar, Generic
+
+T = TypeVar("T")
+
+
+class WidgetQueue(Generic[T], list):
     def __init__(self, *args):
         super().__init__()
         self.extend(args)
@@ -8,14 +13,17 @@ class WidgetQueue(list):
         for _ in self:
             self.dequeue()
 
+    def get_self(self):
+        return self
+
     def getValue(self) -> list:
         """returns a list of widget.get() method results"""
         return [i.get() for i in self]
 
-    def configure(self, index, **kwargs):
+    def configure(self, index: int, **kwargs):
         self[index].configure(**kwargs)
 
-    def bind(self, index, *args, **kwargs):
+    def bind(self, index: int, *args, **kwargs):
         self[index].bind(*args, **kwargs)
 
     def configureAll(self, filter_=None, **kwargs):
@@ -49,9 +57,9 @@ class WidgetQueue(list):
     def empty(self):
         return not self
 
-    def enqueue(self, item):
+    def enqueue(self, item: T) -> T:
         self.append(item)
         return item
 
-    def dequeue(self):
+    def dequeue(self) -> T:
         return self.pop(0)
