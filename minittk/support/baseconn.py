@@ -9,7 +9,7 @@ class BaseConnection(pymysql.Connection, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def use(self, db):
+    def use(self, *args, **kwargs):
         """
         Use database
         Usage:
@@ -18,7 +18,7 @@ class BaseConnection(pymysql.Connection, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def drop(self, drop_type, name):
+    def drop(self, *args, **kwargs):
         """
         Drop
         Usage:

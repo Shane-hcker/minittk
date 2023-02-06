@@ -1,10 +1,9 @@
 # -*- encoding: utf-8 -*-
 import csv
-from types import NoneType
 from minittk import *
 
 
-@UserConnection.usemysql(r'D:\minittk\app\user\config.ini')
+@UserConnection.usemysql(config_file)
 class TableOperationMenu(Menu):
     """
     - 表格操作
@@ -142,9 +141,9 @@ class TableOperationMenu(Menu):
         if not (filename := filedialog.askopenfilename(**askopen_opt)):
             return
 
-        pure_filename = filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]
+        table_name = filename.rstrip('.csv').rstrip('.CSV').split('/')[-1]
 
-        if not self.isTitleValid(table_name := pure_filename):
+        if not self.isTitleValid(table_name):
             raise ValueError('请检查表名')
 
         with open(filename, newline='', encoding='utf-8') as f:

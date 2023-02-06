@@ -2,7 +2,7 @@
 from minittk import *
 
 
-@MyConfigParser.useconfig(r'D:\minittk\app\user\config.ini')
+@MyConfigParser.setupConfig(r'D:\minittk\app\user\config.ini')
 class SettingPage(MyWindow):
     """功能:
     - config文件修改(MySQL, App)
@@ -17,14 +17,15 @@ class SettingPage(MyWindow):
         self.entryBooleanDict = {}  # Entry: boolean(saved)
         self.configSaved = True
         self.focusEntry = None
-        self.entryQueue = self.labelQueue = WidgetQueue()
+        self.entryQueue = WidgetQueue[Entry]()
+        self.labelQueue = WidgetQueue[Label]()
 
         self.save_btn = self.add(button, text='保存配置', command=self.save_config)
         self.save_btn.pack(ipadx=5, anchor='nw', padx=5, pady=5)
         self.mysql_config().app_config()
 
-        self.entryQueue.bindAll(None, '<FocusIn>', self.entry_focusIn)
-        self.entryQueue.bindAll(None, '<FocusOut>', self.entry_focusOut)
+        self.entryQueue.bindAll('<FocusIn>', self.entry_focusIn, filter_=None)
+        self.entryQueue.bindAll('<FocusOut>', self.entry_focusOut, filter_=None)
         self.protocol('WM_DELETE_WINDOW', self.release)
 
     def save_config(self):

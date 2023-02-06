@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 from functools import partial
+from os.path import isfile
+
 from minittk.support.cfgparser import MyConfigParser
 from minittk.support.baseconn import BaseConnection
 
@@ -20,10 +22,13 @@ class UserConnection(BaseConnection):
         """
         if self.__class__._init_flag:
             return
+
+        if not isfile(cfgfile):
+            raise FileNotFoundError(f'{cfgfile}, no such file')
+
         print('going through UserConnection.__init__()')
         self.__class__._init_flag = True
-        self.mysqlConfigParser = MyConfigParser(cfgfile=cfgfile)
-        super().__init__(**self.mysqlConfigParser.getSectionItems('MySQL'), autocommit=True)
+        super().__init__(**MyConfigParser(cfgfile).getSectionItems('MySQL'), autocommit=True)
         self.csr = self.cursor()
         self.tableDescription = [
             "create table if not exists ",
@@ -88,7 +93,7 @@ class UserConnection(BaseConnection):
             case _:
                 raise AttributeError(f'unknown value {fetch} for argument fetch')
 
-    def select(self, *args, table_name, condition=''):
+    def select(self, table_name, *args, condition=None):
         match args:
             case ('*', ) | ():
                 return self.run_query(f'select * from `{table_name}` {condition}')
@@ -105,19 +110,19 @@ class UserConnection(BaseConnection):
     def usemysql(cfgfile=None):
         def inner(cls):
             cls._connection = UserConnection(cfgfile=cfgfile)
-            cls.tupdate = partial(cls._connection.update)
-            cls.show_filtered_databases = partial(cls._connection.show_filtered_databases)
-            cls.cursor = property(cls._connection.csr)
-            cls.run_query = partial(cls._connection.run_query)
-            cls.drop = partial(cls._connection.drop)
-            cls.show_databases = partial(cls._connection.show_databases)
-            cls.use = partial(cls._connection.use)
-            cls.show_tables = partial(cls._connection.show_tables)
-            cls.describe = partial(cls._connection.describe)
-            cls.create_table = partial(cls._connection.create_table)
-            cls.create_database = partial(cls._connection.create_database)
-            cls.select = partial(cls._connection.select)
-            cls.tinsert = partial(cls._connection.insert)
+            cls.tupdate = cls._connection.update
+            cls.show_filtered_databases = cls._connection.show_filtered_databases
+            cls.cursor = cls._connection.csr
+            cls.run_query = cls._connection.run_query
+            cls.drop = cls._connection.drop
+            cls.show_databases = cls._connection.show_databases
+            cls.use = cls._connection.use
+            cls.show_tables = cls._connection.show_tables
+            cls.describe = cls._connection.describe
+            cls.create_table = cls._connection.create_table
+            cls.create_database = cls._connection.create_database
+            cls.select = cls._connection.select
+            cls.tinsert = cls._connection.insert
             print(f'{cls} runned usemysql()')
             return cls
         return inner
@@ -125,7 +130,7 @@ class UserConnection(BaseConnection):
     def update(self, table_name, setvalues: dict, primaryKey: dict) -> None:
         set_string = self.__format_kv_items(setvalues)
         key_string = self.__format_kv_items(primaryKey)
-        print(f"update `{table_name}` set {set_string} where {key_string}")
+        self.run_query(f"update `{table_name}` set {set_string} where {key_string}")
 
     def show_tables(self): return self.run_query('show tables')
 

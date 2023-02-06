@@ -13,14 +13,15 @@ import tkinter.filedialog as filedialog
 from tkinter import TclError
 
 
-from minittk.widgetqueue import *
+from minittk.widgetqueue import WidgetQueue
 from minittk.constants import *
-from minittk.window import *
+from minittk.window import MyWindow
 from minittk.widgets import *
-from minittk.support.cfgparser import *
-from minittk.support.dbconn import *
-from minittk.support.uiautomation import *
-from minittk.support.baseconn import *
+from minittk.support.baseconn import BaseConnection
+from minittk.support.dbconn import UserConnection
+from minittk.support.aiodbconn import AsyncConnection
+from minittk.support.cfgparser import MyConfigParser
+from minittk.support.uiautomation import UIAutomation
 
 
 config_file = r'D:\minittk\app\user\config.ini'
