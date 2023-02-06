@@ -2,7 +2,7 @@
 from minittk import *
 
 
-@MyConfigParser.useconfig(config_file)
+@MyConfigParser.setupConfig(config_file)
 @UserConnection.usemysql(config_file)
 class DatabaseOperationMenu(Menu):
     """

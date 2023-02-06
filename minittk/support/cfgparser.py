@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from os.path import abspath
+from os.path import abspath, isfile
 import configparser
 
 
@@ -13,11 +13,12 @@ class MyConfigParser(configparser.ConfigParser):
         return cls._instance
 
     def __init__(self, cfgfile=None):
-        if not cfgfile:
+        if self.__class__._init_flag or not cfgfile:
             return
 
-        if self.__class__._init_flag:
-            return
+        if not isfile(cfgfile):
+            raise FileNotFoundError(f'file {cfgfile} does not exist')
+
         print('going through MyConfigParser.__init__()')
         super().__init__()
         self.__class__._init_flag = True
@@ -25,7 +26,7 @@ class MyConfigParser(configparser.ConfigParser):
         self.read(cfgfile, encoding='utf-8') if cfgfile is not None else ...
 
     @staticmethod
-    def useconfig(cfgfile=None):
+    def setupConfig(cfgfile=None):
         def inner(cls):
             cls.cfgParser = MyConfigParser(cfgfile=cfgfile)
             print(f'{cls} runned useconfig()')

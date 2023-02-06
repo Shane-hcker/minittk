@@ -42,7 +42,7 @@ class WidgetQueue(Generic[T], list):
                 continue
             item.configure(**kwargs)
 
-    def bindAll(self, filter_=None, *args, **kwargs):
+    def bindAll(self, *args, filter_=None, **kwargs):
         if not filter_:
             for item in self:
                 item.bind(*args, **kwargs)
