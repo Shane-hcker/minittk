@@ -29,15 +29,13 @@ class MyWindow:
         self.window.resizable(*resizable)
         self._style = ttk.Style()
 
+    def __call__(self, *args, **kwargs):
+        self.mainloop()
+
     def __enter__(self) -> "MyWindow":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.mainloop()
-        if exc_type:
-            print(f"exc_type: {exc_type}", f"exc_val: {exc_val}", f"exc_tb: {exc_tb}", sep='\n')
-
-    def __call__(self, *args, **kwargs) -> None:
         self.mainloop()
 
     def protocol(self, name=None, func=None):

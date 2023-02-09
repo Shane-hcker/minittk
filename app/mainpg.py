@@ -1,15 +1,16 @@
 # -*- encoding: utf-8 -*-
+import asyncio
+
 from minittk import *
-
 from user.eventactions import EventActions
-from user.setting import SettingPage
-from operations.tableops import TableOperationMenu
-from operations.dbops import DatabaseOperationMenu
 
 
-# @UserConnection.usemysql()
-@MyConfigParser.setupConfig()
-@AsyncConnection.setupMySQL
+sendQueue, recvQueue = queues = (asyncio.Queue(), asyncio.Queue())
+sender = SQLSender(sendQueue)
+
+
+@sender.assignAttributesTo
+@MyConfigParser.setupConfig(config_file)
 class MainPage(MyWindow):
     def __init__(self):
         print(f'__init__(): {self}, id: {id(self)}')
@@ -21,15 +22,14 @@ class MainPage(MyWindow):
         self.curr_theme = self.cfgParser.get('App', 'theme')
         self.current_table: str = ...
         self.database_label: Label = ...
-
+        self.uploadCheckbutton: Checkbutton = ...
         self.themeCombobox: Combobox = ...
         self.databaseCombobox: Combobox = ...
         self.selectionCombobox: Combobox = ...
-
         self.tempValueEntry: Entry = ...
         self.tempPwdEntry: Entry = ...
 
-        self.uploadCheckbutton: Checkbutton = ...
+        self.eventActions = EventActions(self)
 
         self.forbid_db_list = ['information_schema', 'performance_schema', 'mysql']
 
@@ -49,19 +49,9 @@ class MainPage(MyWindow):
 
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
-
-        self.createSidebar().createViewTab()
-        DatabaseOperationMenu(self)
-        TableOperationMenu(self)
-
-    async def __call__(self, *args, **kwargs):
-        self.mainloop()
-        await self._connection.close()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__call__()
-        if exc_type:
-            print(f"exc_type: {exc_type}", f"exc_val: {exc_val}", f"exc_tb: {exc_tb}", sep='\n')
+        self.run = self.__call__
+        # DatabaseOperationMenu(self)
+        # TableOperationMenu(self)
 
     def createSidebar(self) -> "MainPage":
         lFrame = self.add(labelframe, text='我的数据库 My Database', padding=10,
@@ -89,11 +79,12 @@ class MainPage(MyWindow):
 
         self.databaseCombobox = addon(combobox, width=25)
         self.selectionCombobox = addon(combobox, width=25)
-        self.databaseCombobox.values = self.show_filtered_databases(restriction=self.forbid_db_list)
-        self.selectionCombobox.values = [table[0] for table in self.show_tables()]
+        # self.show_databases(restriction=self.forbid_db_list)
+        # self.databaseCombobox.values = recvQueue.get_nowait()
+        # self.selectionCombobox.values = [table for (table, ) in await self.show_tables()]
 
-        self.databaseCombobox.dbind(EventActions.databaseComboboxSelected(self))
-        self.selectionCombobox.dbind(EventActions.selectionComboboxSelected(self))
+        self.databaseCombobox.dbind()
+        self.selectionCombobox.dbind()
 
         self.databaseCombobox.grid(column=0, row=2, columnspan=3, pady=5)
         self.selectionCombobox.grid(column=0, row=4, columnspan=3, pady=5)
@@ -119,13 +110,13 @@ class MainPage(MyWindow):
 
     def __setupViewTabUpper(self):
         addon = partial(self.add, parent=self.rightSideTopFrame)
-        addon(button, bootstyle=(SUCCESS, OUTLINE), command=self.open(UIAutomation.openwithTX),
+        addon(button, bootstyle=(SUCCESS, OUTLINE), command=None,
               text='启动腾讯会议').pack(padx=10, pady=10, side=LEFT)
 
-        addon(button, text='启动Zoom', command=self.open(UIAutomation.openwithZoom),
+        addon(button, text='启动Zoom', command=None,
               bootstyle=SUCCESS).pack(pady=10, side=LEFT)
 
-        addon(button, text='设置', command=SettingPage).pack(padx=10, pady=10, side=RIGHT)
+        addon(button, text='设置', command=None).pack(padx=10, pady=10, side=RIGHT)
 
     def __setupViewTabLower(self):
         addon = partial(self.add, parent=self.rightSideFrame)
@@ -161,19 +152,17 @@ class MainPage(MyWindow):
         self.tree.load_table_data()
         return value, password
 
-    def open(self, app):
-        def inner():
-            if not self.isRunningMeetingApp:
-                self.isRunningMeetingApp = True
-                optionContent = self.getTMeetingValues() if self.tempValueEntry.value else self.selectedOptionContent
+    async def open(self, app):
+        if not self.isRunningMeetingApp:
+            self.isRunningMeetingApp = True
+            optionContent = self.getTMeetingValues() if self.tempValueEntry.value else self.selectedOptionContent
 
-                if not optionContent:
-                    self.isRunningMeetingApp = False
-                    return Messagebox.show_error(message='你未选择任何数据', title='错误')
-
-                app(optionContent)
+            if not optionContent:
                 self.isRunningMeetingApp = False
-        return inner
+                return Messagebox.show_error(message='你未选择任何数据', title='错误')
+
+            app(optionContent)
+            self.isRunningMeetingApp = False
 
     def saveDatabaseChange(self):
         self.cfgParser.writeAfterSet('MySQL', 'database', self.database_label.value)
@@ -186,7 +175,17 @@ class MainPage(MyWindow):
         value = self.tree.get_selected_row()  # set()获取当前row的值
         return None if not value else (value['1'], value['2'])
 
+    @classmethod
+    async def generate(cls):
+        cls().createSidebar().createViewTab().run()
+
+
+async def main():
+    # fixme mainloop => 多线程 / 上下文管理器块内 提供解决方案
+    connect = asyncio.create_task(SQLHandler(sendQueue, recvQueue, config_file).connect())
+    await MainPage.generate()
+    await connect
 
 if __name__ == '__main__':
-    with MainPage() as window:
-        pass
+    total_handler = 1
+    asyncio.run(main())

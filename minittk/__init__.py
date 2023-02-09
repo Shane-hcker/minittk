@@ -1,8 +1,10 @@
 # -*- encoding: utf-8 -*-
 from typing import *
 from functools import partial
-import pymysql
-from pymysql.cursors import Cursor
+# import pymysql
+import asyncio
+import aiomysql
+# from pymysql.cursors import Cursor
 import ttkbootstrap as ttk
 from ttkbootstrap.tableview import TableRow
 from ttkbootstrap.toast import ToastNotification
@@ -17,9 +19,8 @@ from minittk.widgetqueue import WidgetQueue
 from minittk.constants import *
 from minittk.window import MyWindow
 from minittk.widgets import *
-from minittk.support.baseconn import BaseConnection
-from minittk.support.dbconn import UserConnection
-from minittk.support.aiodbconn import AsyncConnection
+from minittk.support.sqlsender import SQLSender
+from minittk.support.sqlhandler import SQLHandler
 from minittk.support.cfgparser import MyConfigParser
 from minittk.support.uiautomation import UIAutomation
 
