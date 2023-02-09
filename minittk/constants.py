@@ -2,13 +2,16 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as ttk
 from typing import *
-from .widgets import *
+from minittk.widgets import *
 
 
-# PyMySQL fetch methods
+# AioMySQL fetch methods
 ONE: Final = 'one'
 ALL: Final = 'all'
 MANY: Final = 'many'
+Q: Final = 'query'  # 查询
+M: Final = 'modify'  # CRUD
+terminate: Final = ("", 'terminate')
 
 # Focuses
 FOCUS: Final = 'focus'

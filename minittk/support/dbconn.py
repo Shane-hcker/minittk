@@ -2,11 +2,12 @@
 from functools import partial
 from os.path import isfile
 
+import pymysql
+
 from minittk.support.cfgparser import MyConfigParser
-from minittk.support.baseconn import BaseConnection
 
 
-class UserConnection(BaseConnection):
+class UserConnection(pymysql.Connection):
     """User database connection"""
     _instance = None
     _init_flag = False
@@ -109,20 +110,20 @@ class UserConnection(BaseConnection):
     @staticmethod
     def usemysql(cfgfile=None):
         def inner(cls):
-            cls._connection = UserConnection(cfgfile=cfgfile)
-            cls.tupdate = cls._connection.update
-            cls.show_filtered_databases = cls._connection.show_filtered_databases
-            cls.cursor = cls._connection.csr
-            cls.run_query = cls._connection.run_query
-            cls.drop = cls._connection.drop
-            cls.show_databases = cls._connection.show_databases
-            cls.use = cls._connection.use
-            cls.show_tables = cls._connection.show_tables
-            cls.describe = cls._connection.describe
-            cls.create_table = cls._connection.create_table
-            cls.create_database = cls._connection.create_database
-            cls.select = cls._connection.select
-            cls.tinsert = cls._connection.insert
+            cls.connection = UserConnection(cfgfile=cfgfile)
+            cls.tupdate = cls.connection.update
+            cls.show_filtered_databases = cls.connection.show_filtered_databases
+            cls.cursor = cls.connection.csr
+            cls.run_query = cls.connection.run_query
+            cls.drop = cls.connection.drop
+            cls.show_databases = cls.connection.show_databases
+            cls.use = cls.connection.use
+            cls.show_tables = cls.connection.show_tables
+            cls.describe = cls.connection.describe
+            cls.create_table = cls.connection.create_table
+            cls.create_database = cls.connection.create_database
+            cls.select = cls.connection.select
+            cls.tinsert = cls.connection.insert
             print(f'{cls} runned usemysql()')
             return cls
         return inner
