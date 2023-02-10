@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 import asyncio
+import threading
 
 from minittk import *
 from user.eventactions import EventActions
@@ -177,7 +178,8 @@ class MainPage(MyWindow):
 
     @classmethod
     async def generate(cls):
-        cls().createSidebar().createViewTab().run()
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, cls().createSidebar().createViewTab().run)
 
 
 async def main():
