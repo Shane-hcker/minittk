@@ -28,21 +28,24 @@ class SQLHandler:
             self.kwargs.pop('database')
 
     def __await__(self):
-        yield from asyncio.create_task(self.connect())
+        yield from asyncio.create_task(self.run_forever())
         return self
 
     async def __aenter__(self):
-        return await self.connect()
+        return await self.run_forever()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.cursor.close()
         self.connection.close()
 
-    async def connect(self, **kwargs):
+    async def run_forever(self, **kwargs):
+        """Mainloop"""
         self.connection = await aiomysql.connect(**(self.kwargs or kwargs), autocommit=True)
         self.cursor = await self.connection.cursor()
         self.__connected = True
-        return self
+        await self.__run()
+        await self.cursor.close()
+        self.connection.close()
 
     async def modify(self, sql):
         await self.cursor.execute(sql)
@@ -50,10 +53,9 @@ class SQLHandler:
     async def fetch(self, sql):
         return await self.cursor.execute(sql)
 
-    async def run_forever(self):
+    async def __run(self):
         if not self.__connected:
             raise ConnectionAbortedError("MySQL database is not connected")
-
         while claimFromQueue := await self.sender.get():
             sql, mode = claimFromQueue
             if mode == 'terminate':
