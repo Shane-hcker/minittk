@@ -1,12 +1,14 @@
 # -*- encoding: utf-8 -*-
-import asyncio
-import threading
+from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Process
+from time import perf_counter as pc
 
 from minittk import *
 from user.eventactions import EventActions
 
 
-sendQueue, recvQueue = queues = (asyncio.Queue(), asyncio.Queue())
+total_handler = 1
+sendQueue, recvQueue = (asyncio.Queue(), asyncio.Queue())
 sender = SQLSender(sendQueue)
 
 
@@ -42,7 +44,8 @@ class MainPage(MyWindow):
         ]
 
         super().__init__('Title', '1200x700', (True, True), startup_pos, self.curr_theme)
-
+        self.ok = False
+        self.window.bind('<Motion>', self.__init_widgets)
         self.checkbuttonBooleanVar = boolvar()
         self.panedwin = self.add(panedwindow, orient=HORIZONTAL, bootstyle='default').rpack(fill=BOTH, expand=True)
         self.rightSideFrame = self.add(frame)
@@ -50,9 +53,11 @@ class MainPage(MyWindow):
 
         self.tree = self.add_tabview(parent=self.rightSideFrame, coldata=tree_column, paginated=True,
                                      searchable=True, pagesize=20).rpack(fill=BOTH, expand=True)
-        self.run = self.__call__
         # DatabaseOperationMenu(self)
         # TableOperationMenu(self)
+
+    def __call__(self, *args, **kwargs):
+        super().__call__(*args, **kwargs)
 
     def createSidebar(self) -> "MainPage":
         lFrame = self.add(labelframe, text='我的数据库 My Database', padding=10,
@@ -80,12 +85,9 @@ class MainPage(MyWindow):
 
         self.databaseCombobox = addon(combobox, width=25)
         self.selectionCombobox = addon(combobox, width=25)
-        # self.show_databases(restriction=self.forbid_db_list)
-        # self.databaseCombobox.values = recvQueue.get_nowait()
-        # self.selectionCombobox.values = [table for (table, ) in await self.show_tables()]
 
-        self.databaseCombobox.dbind()
-        self.selectionCombobox.dbind()
+        # self.databaseCombobox.dbind()
+        # self.selectionCombobox.dbind()
 
         self.databaseCombobox.grid(column=0, row=2, columnspan=3, pady=5)
         self.selectionCombobox.grid(column=0, row=4, columnspan=3, pady=5)
@@ -132,6 +134,12 @@ class MainPage(MyWindow):
         display_text = MessageCatalog.translate('保存后下次启动的默认主题将为你选定的')
         theme_save_btn.attach_tooltip(text=display_text, wraplength=150, bootstyle=(INFO, INVERSE))
 
+    def __init_widgets(self, event):
+        if self.ok:
+            return
+        self.ok = True
+        print(sendQueue.get_nowait())
+
     def __uploadCheckbuttonTrigger(self):
         uploadable = str(self.checkbuttonBooleanVar.get())
         self.cfgParser.writeAfterSet('Meeting', 'uploadable', uploadable)
@@ -176,18 +184,27 @@ class MainPage(MyWindow):
         value = self.tree.get_selected_row()  # set()获取当前row的值
         return None if not value else (value['1'], value['2'])
 
-    @classmethod
-    async def generate(cls):
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, cls().createSidebar().createViewTab().run)
+    @staticmethod
+    def join(process: Process):
+        process.start()
+        process.join()
+        [sendQueue.put_nowait(terminate) for _ in range(total_handler)]
+
+    @staticmethod
+    def generate():
+        app = MainPage().createSidebar().createViewTab()
+        app()
 
 
 async def main():
-    # fixme mainloop => 多线程 / 上下文管理器块内 提供解决方案
-    connect = asyncio.create_task(SQLHandler(sendQueue, recvQueue, config_file).connect())
-    await MainPage.generate()
+    # fixme not sending anything
+    loop = asyncio.get_running_loop()
+    handler = [SQLHandler(sendQueue, recvQueue, config_file).run_forever() for _ in range(total_handler)]
+    window_proc = Process(target=MainPage.generate)
+    connect = asyncio.gather(*handler)
+    await loop.run_in_executor(None, MainPage.join, window_proc)
     await connect
 
+
 if __name__ == '__main__':
-    total_handler = 1
     asyncio.run(main())
